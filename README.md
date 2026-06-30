@@ -2,100 +2,72 @@
 
 [English](./README.en.md) | 简体中文
 
-CloakBrowserApp 是一个基于 CloakBrowser 的本地浏览器环境管理桌面应用。它使用 Electron 提供桌面界面，通过本地 Express API、SQLite 和持久化浏览器上下文管理相互隔离的浏览器环境。
+CloakBrowserApp 是一个基于 [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) 的本地浏览器环境管理与启动工具。
 
-> 本项目采用非商业源码许可。允许个人学习、研究、测试和符合许可条款的非商业使用；商业使用需要另行获得授权。
+它将 CloakBrowser 的浏览器启动、持久化 Profile、指纹参数和代理能力整合到桌面管理界面中。用户无需编写启动代码，即可创建多个相互隔离的浏览器环境，并对环境进行统一配置、启动、停止和维护。
 
-## 界面预览
+> 本项目适合需要长期维护多个独立浏览器环境，同时希望直接使用 CloakBrowser 能力的个人用户和研究场景。
 
-### 环境管理
+## 环境管理
+
+通过统一列表查看和管理所有浏览器环境，包括运行状态、代理配置和最近打开时间。
 
 ![环境管理](./docs/images/environment-management.png)
 
-### 环境配置
+支持的管理操作：
+
+- 创建、编辑和删除浏览器环境
+- 单独或批量启动、停止环境
+- 搜索并筛选已有环境
+- 查看环境当前运行状态
+- 为每个环境保存独立的浏览器数据
+
+## 环境配置
+
+每个环境使用独立的持久化用户数据目录，浏览器 Cookie、LocalStorage、缓存和会话状态可以在关闭后继续保留。
 
 ![环境配置](./docs/images/profile-editor.png)
 
-### 内核下载
+可配置内容包括：
+
+- 浏览器环境名称与启动网址
+- HTTP 或 SOCKS5 代理
+- 时区和浏览器语言
+- 屏幕宽度与高度
+- CPU 线程数与设备内存
+- 浏览器存储配额
+- 根据代理自动匹配时区和语言
+- CloakBrowser 指纹种子与启动参数
+
+启动环境时，CloakBrowserApp 会根据配置创建对应的持久化浏览器上下文，并使用 CloakBrowser 启动真实浏览器窗口。
+
+## 内核管理
+
+内核页面按 Chromium 子版本整理 CloakBrowser 可用构建，并展示每个版本支持的操作系统。
 
 ![内核下载](./docs/images/kernel-downloads.png)
 
-## 主要能力
+目前提供：
 
-- 创建、编辑、启动、停止和删除本地浏览器环境
-- 为环境配置代理、时区、语言、屏幕尺寸、CPU、内存和存储配额
-- 使用独立的持久化用户数据目录隔离环境数据
-- 根据环境种子生成稳定的浏览器指纹参数
-- 在本地 SQLite 数据库中保存环境配置
-- 通过仅监听 `127.0.0.1` 的本地 API 管理环境和会话
-- 按 Chromium 子版本聚合 Windows、Linux 和 macOS 内核下载
-- 提供官方下载、地址复制和 GitHub 备用下载入口
+- Windows、Linux 和 macOS 构建信息
+- 官方下载入口
+- 下载地址复制
+- GitHub 备用下载
+- 版本、指纹补丁数量和支持平台展示
 
-## 技术栈
+## 与 CloakBrowser 的关系
 
-- Electron 39
-- React 19 + TypeScript
-- electron-vite + Vite 7
-- Tailwind CSS 4
-- Express 5
-- better-sqlite3
-- CloakBrowser + Playwright Core
-- Radix UI + Lucide Icons
+CloakBrowser 是经过源码级指纹修改的 Chromium 浏览器项目，提供持久化 Profile、代理、时区、语言和浏览器指纹等启动能力。
 
-## 快速开始
+CloakBrowserApp 不修改 CloakBrowser 内核，而是在其能力之上提供可视化的环境管理和启动入口：
 
-### 环境要求
+- CloakBrowser 负责浏览器内核、指纹能力与浏览器运行
+- CloakBrowserApp 负责环境配置、Profile 管理、状态展示和启动控制
 
-- Windows 10/11
-- Node.js 22 LTS
-- npm 10 或更高版本
-
-### 本地开发
-
-```bash
-npm install
-npm run dev
-```
-
-### 类型检查
-
-```bash
-npm run typecheck
-```
-
-### 生产构建
-
-```bash
-npm run build
-```
-
-## 项目结构
-
-```text
-src/
-  main/       Electron 主进程、本地 API、SQLite 与浏览器会话
-  preload/    安全的窗口控制桥接
-  renderer/   React 管理界面
-docs/images/  GitHub 项目截图
-```
-
-## 本地数据与隐私
-
-- 环境配置和用户数据保存在 Electron 的应用数据目录中。
-- 本地管理 API 默认仅监听 `127.0.0.1:6788`。
-- 代理凭据可能包含敏感信息，请勿提交数据库、日志或真实配置截图。
-- `.gitignore` 已排除数据库、构建产物、依赖目录和环境变量文件。
-
-## 当前状态
-
-项目当前重点支持 Windows 桌面开发与打包。环境管理和内核下载页面可用，代理与设置页面仍在继续完善。
-
-## 上游项目
-
-CloakBrowserApp 使用 [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) 提供浏览器运行能力。CloakBrowser、Chromium、依赖包和下载的二进制文件分别遵循其各自许可证；本仓库许可证仅覆盖 CloakBrowserApp 自有代码。
+有关 CloakBrowser 的详细能力、支持平台和内核版本，请查看 [CloakBrowser 官方项目](https://github.com/CloakHQ/CloakBrowser)。
 
 ## 许可证
 
-本项目使用 [PolyForm Noncommercial License 1.0.0](./LICENSE)，SPDX 标识为 `PolyForm-Noncommercial-1.0.0`。
+本项目使用 [PolyForm Noncommercial License 1.0.0](./LICENSE)。
 
-该许可允许符合条款的非商业使用、修改和分发，但不允许未经授权的商业使用。它属于 Source Available 许可，不是 OSI 批准的开源许可证。商业授权请通过 GitHub Issue 联系项目维护者。
+允许符合许可条款的个人学习、研究、测试和其他非商业使用。未经单独授权，不允许将本项目用于商业用途。CloakBrowser、Chromium 和其他第三方组件分别遵循其各自许可证。

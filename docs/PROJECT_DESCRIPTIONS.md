@@ -1,35 +1,29 @@
 # GitHub 项目介绍文案
 
-下面的文案可分别用于 GitHub 仓库描述、社交平台介绍和首个 Release。
-
 ## 中文
 
 ### 极简版
 
-基于 CloakBrowser 的本地浏览器环境管理桌面应用，支持环境隔离、指纹参数、代理配置、持久化数据和多平台内核下载。
+基于 CloakBrowser 的本地浏览器环境管理与启动工具。
 
 ### 标准版
 
-CloakBrowserApp 是一款本地优先的浏览器环境管理桌面应用。它基于 Electron、React、SQLite 和 CloakBrowser，提供环境创建、配置、启动与停止、独立用户数据目录、浏览器指纹参数以及按版本聚合的多平台内核下载。
+CloakBrowserApp 将 CloakBrowser 的浏览器启动、持久化 Profile、指纹参数和代理能力整合到桌面管理界面中，用于创建、配置、启动和维护多个相互隔离的浏览器环境。
 
-### 发布版
+### 完整版
 
-CloakBrowserApp v1.0.0 提供一个轻量、清晰的本地浏览器环境管理界面。用户可以为每个环境设置代理、时区、语言、屏幕尺寸、CPU、内存和存储配额，并通过独立的持久化目录隔离浏览器数据。应用内置本地 API 与 SQLite 存储，同时提供 Windows、Linux 和 macOS 的 CloakBrowser 内核下载入口。项目采用 PolyForm Noncommercial 1.0.0 许可，面向学习、研究和非商业场景开放源码。
+CloakBrowserApp 是一个基于 CloakBrowser 的本地浏览器环境管理与启动工具。用户可以通过可视化界面创建多个独立环境，为每个环境配置代理、时区、语言、屏幕、CPU、内存和存储参数，并保留各自的 Cookie、缓存和登录状态。应用同时提供运行状态管理、批量启动与停止，以及按 Chromium 版本整理的 CloakBrowser 多平台内核下载。
 
 ## English
 
 ### One-line
 
-A local-first Electron desktop app for managing isolated CloakBrowser environments, fingerprint settings, proxies, persistent profiles, and cross-platform kernel downloads.
+A local browser environment manager and launcher powered by CloakBrowser.
 
 ### Standard
 
-CloakBrowserApp is a local-first desktop manager built with Electron, React, SQLite, and CloakBrowser. It provides profile lifecycle controls, isolated user-data directories, fingerprint settings, proxy configuration, and Chromium kernel downloads grouped by version.
+CloakBrowserApp brings CloakBrowser launches, persistent profiles, fingerprint settings, and proxy capabilities into a desktop interface for managing isolated browser environments.
 
-### Release
+### Full
 
-CloakBrowserApp v1.0.0 provides a focused desktop interface for managing isolated local browser environments. Each environment can define proxy, timezone, locale, screen size, CPU, memory, and storage settings while retaining its own persistent user-data directory. A local Express API and SQLite database keep management data on the device, and the kernel page provides Windows, Linux, and macOS downloads grouped by Chromium build. The source is available under the PolyForm Noncommercial License 1.0.0.
-
-## 推荐 Topics
-
-`electron` `react` `typescript` `browser-automation` `browser-profiles` `playwright` `sqlite` `cloakbrowser` `fingerprint-browser` `source-available`
+CloakBrowserApp is a local browser environment manager and launcher powered by CloakBrowser. It provides a visual interface for creating isolated environments, configuring proxies and browser fingerprint parameters, preserving cookies and login sessions, controlling browser launches, and accessing CloakBrowser kernel downloads grouped by Chromium version.
