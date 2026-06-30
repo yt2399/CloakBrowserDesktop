@@ -6,6 +6,12 @@ import { startLocalServer, stopLocalServer } from './server/app'
 
 let mainWindow: BrowserWindow | null = null
 
+function getAppIconPath(): string {
+  return app.isPackaged
+    ? join(process.resourcesPath, 'icon.png')
+    : join(app.getAppPath(), 'build/icon.png')
+}
+
 async function createWindow(): Promise<void> {
   await startLocalServer(app.getPath('userData'))
 
@@ -17,6 +23,7 @@ async function createWindow(): Promise<void> {
     show: false,
     autoHideMenuBar: true,
     title: 'CloakBrowserApp',
+    icon: getAppIconPath(),
     frame: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.cjs'),

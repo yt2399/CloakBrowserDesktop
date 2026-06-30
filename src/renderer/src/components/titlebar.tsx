@@ -1,5 +1,5 @@
-import { Infinity as InfinityIcon, Maximize2, Minus, X } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Maximize2, Minus, X } from 'lucide-react'
+import logoUrl from '@/assets/logo.png'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -7,11 +7,12 @@ export function Titlebar({ serviceOnline }: { serviceOnline: boolean }) {
   return (
     <header className="flex h-11 items-center justify-between border-b bg-background px-3 [-webkit-app-region:drag]">
       <div className="flex items-center gap-2">
-        <Avatar className="size-8 rounded-lg bg-primary text-primary-foreground">
-          <AvatarFallback className="rounded-lg bg-transparent text-white">
-            <InfinityIcon className="size-[18px]" />
-          </AvatarFallback>
-        </Avatar>
+        <img
+          src={logoUrl}
+          alt=""
+          className="size-8 rounded-lg object-cover"
+          aria-hidden="true"
+        />
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold">CloakBrowserApp</span>
           <Badge variant="secondary" className="bg-muted text-foreground">

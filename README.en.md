@@ -1,5 +1,9 @@
 # CloakBrowserApp
 
+<p align="center">
+  <img src="./docs/images/logo.png" alt="CloakBrowserApp Logo" width="180" />
+</p>
+
 English | [简体中文](./README.md)
 
 CloakBrowserApp is a local browser environment manager and launcher powered by [CloakBrowser](https://github.com/CloakHQ/CloakBrowser).

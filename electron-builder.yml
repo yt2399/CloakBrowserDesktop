@@ -2,6 +2,9 @@ appId: com.cloakbrowser.app
 productName: CloakBrowserApp
 directories:
   buildResources: build
+extraResources:
+  - from: build/icon.png
+    to: icon.png
 files:
   - out/**
   - package.json
@@ -11,7 +14,14 @@ asarUnpack:
   - node_modules/playwright-core/**
 win:
   executableName: CloakBrowserApp
+  icon: build/icon.ico
+mac:
+  icon: build/icon.png
+linux:
+  icon: build/icon.png
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
+  installerIcon: build/icon.ico
+  uninstallerIcon: build/icon.ico

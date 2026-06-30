@@ -1,5 +1,9 @@
 # GitHub 项目介绍文案
 
+<p align="center">
+  <img src="./images/logo.png" alt="CloakBrowserApp Logo" width="180" />
+</p>
+
 ## 中文
 
 ### 极简版

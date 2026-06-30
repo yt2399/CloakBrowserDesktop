@@ -2,7 +2,9 @@ node_modules/
 out/
 dist/
 release/
-build/
+build/*
+!build/icon.png
+!build/icon.ico
 *.tsbuildinfo
 prototype-screenshot*.png
 *.db

@@ -1,5 +1,9 @@
 # CloakBrowserApp
 
+<p align="center">
+  <img src="./docs/images/logo.png" alt="CloakBrowserApp Logo" width="180" />
+</p>
+
 [English](./README.en.md) | 简体中文
 
 CloakBrowserApp 是一个基于 [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) 的本地浏览器环境管理与启动工具。
