@@ -1,0 +1,17 @@
+appId: com.cloakbrowser.app
+productName: CloakBrowserApp
+directories:
+  buildResources: build
+files:
+  - out/**
+  - package.json
+asarUnpack:
+  - node_modules/better-sqlite3/**
+  - node_modules/cloakbrowser/**
+  - node_modules/playwright-core/**
+win:
+  executableName: CloakBrowserApp
+nsis:
+  artifactName: ${name}-${version}-setup.${ext}
+  shortcutName: ${productName}
+  uninstallDisplayName: ${productName}

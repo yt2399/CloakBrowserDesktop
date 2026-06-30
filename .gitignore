@@ -1,0 +1,12 @@
+node_modules/
+out/
+dist/
+release/
+build/
+*.tsbuildinfo
+prototype-screenshot*.png
+*.db
+*.sqlite
+.env
+.DS_Store
+Thumbs.db

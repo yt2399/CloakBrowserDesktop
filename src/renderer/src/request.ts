@@ -1,0 +1,52 @@
+import type { ApiResponse, BrowserProfile, ProfileInput } from './types'
+
+const fallbackBaseUrl = 'http://127.0.0.1:6788/api'
+
+function getBaseUrl(): string {
+  return window.appInfo?.apiBaseUrl || fallbackBaseUrl
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const response = await fetch(`${getBaseUrl()}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers || {})
+    },
+    ...init
+  })
+  const body = (await response.json()) as ApiResponse<T>
+  if (!response.ok || !body.succeed) {
+    throw new Error(body.msg || '请求失败')
+  }
+  return body.data
+}
+
+export const profileApi = {
+  list() {
+    return request<BrowserProfile[]>('/profiles')
+  },
+  create(input: ProfileInput) {
+    return request<BrowserProfile>('/profiles', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    })
+  },
+  update(id: string, input: ProfileInput) {
+    return request<BrowserProfile>(`/profiles/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(input)
+    })
+  },
+  remove(id: string) {
+    return request<{ id: string }>(`/profiles/${id}`, { method: 'DELETE' })
+  },
+  open(id: string) {
+    return request<{ id: string; status: string }>(`/profiles/${id}/open`, { method: 'POST' })
+  },
+  close(id: string) {
+    return request<{ id: string; status: string }>(`/profiles/${id}/close`, { method: 'POST' })
+  },
+  health() {
+    return request<{ service: string; kernel: string }>('/health')
+  }
+}

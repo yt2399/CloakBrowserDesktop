@@ -1,0 +1,196 @@
+import { Filter, Play, Plus, Search, StopCircle } from 'lucide-react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
+import { ProfileDialog } from '@/components/profile-dialog'
+import { ProfilesTable } from '@/components/profiles-table'
+import type { ProfilesStore } from '@/hooks/use-profiles'
+
+const tabs: Array<{ key: 'all' | 'running' | 'stopped'; label: (n: number) => string }> = [
+  { key: 'all', label: (n) => `全部（${n}）` },
+  { key: 'running', label: (n) => `运行中（${n}）` },
+  { key: 'stopped', label: (n) => `已停止（${n}）` }
+]
+
+export function ProfilesPage({ store }: { store: ProfilesStore }) {
+  const {
+    loading,
+    pagedProfiles,
+    selectedKeys,
+    setSelectedKeys,
+    allFilteredIds,
+    currentPage,
+    totalPages,
+    query,
+    setQuery,
+    tab,
+    setTab,
+    counts,
+    modalOpen,
+    setModalOpen,
+    editing,
+    formValues,
+    setFormValues,
+    saving,
+    nameError,
+    openCreate,
+    openEdit,
+    save,
+    gotoPage,
+    deleteTarget,
+    requestDelete,
+    confirmDelete,
+    cancelDelete,
+    openProfile,
+    closeProfile,
+    batchSetStatus
+  } = store
+
+  return (
+    <div className="flex min-w-0 flex-col gap-3">
+      <section className="rounded-xl border bg-card p-5">
+        <div className="flex items-start justify-between gap-6">
+          <div className="flex min-w-[430px] flex-col gap-5">
+            <div className="flex items-center gap-3">
+              <div className="relative w-[330px]">
+                <Search className="absolute left-3 top-1/2 size-[17px] -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="搜索环境名称或代理"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="h-[42px] pl-9"
+                />
+              </div>
+              <Button variant="outline" className="h-[42px]">
+                <Filter className="size-4" />
+                筛选
+              </Button>
+            </div>
+            <div className="flex items-center gap-9">
+              {tabs.map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => setTab(item.key)}
+                  className={`relative h-[42px] cursor-pointer border-0 bg-transparent text-sm transition ${
+                    tab === item.key
+                      ? 'font-semibold text-primary after:absolute after:inset-x-0 after:bottom-0 after:h-[3px] after:rounded-full after:bg-primary after:content-[""]'
+                      : 'text-muted-foreground'
+                  }`}
+                >
+                  {item.label(counts[item.key])}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col items-end gap-4">
+            <div className="flex items-center gap-3">
+              <Select defaultValue="all-tz">
+                <SelectTrigger className="h-[42px] w-[136px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-tz">全部时区</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select defaultValue="all-status">
+                <SelectTrigger className="h-[42px] w-[136px]">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all-status">全部状态</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button className="h-[42px]" onClick={openCreate}>
+                <Plus className="size-[18px]" />
+                创建环境
+              </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" className="h-[42px]" onClick={() => batchSetStatus('running')}>
+                <Play className="size-4" />
+                批量启动
+              </Button>
+              <Button variant="outline" className="h-[42px]" onClick={() => batchSetStatus('stopped')}>
+                <StopCircle className="size-4" />
+                批量停止
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <ProfilesTable
+        loading={loading}
+        pagedProfiles={pagedProfiles}
+        selectedKeys={selectedKeys}
+        onSelectionChange={setSelectedKeys}
+        allFilteredIds={allFilteredIds}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        total={allFilteredIds.length}
+        gotoPage={gotoPage}
+        onOpen={openProfile}
+        onClose={closeProfile}
+        onEdit={openEdit}
+        onDelete={requestDelete}
+      />
+
+      <ProfileDialog
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        editing={editing}
+        formValues={formValues}
+        onFormChange={setFormValues}
+        saving={saving}
+        nameError={nameError}
+        onSave={save}
+      />
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) cancelDelete()
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>删除环境</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定删除「{deleteTarget?.name}」吗？
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault()
+                confirmDelete()
+              }}
+            >
+              删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
