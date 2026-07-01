@@ -3,7 +3,13 @@ import logoUrl from '@/assets/logo.png'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
-export function Titlebar({ serviceOnline }: { serviceOnline: boolean }) {
+export function Titlebar({
+  kernelInstalled,
+  onOpenKernels
+}: {
+  kernelInstalled: boolean
+  onOpenKernels: () => void
+}) {
   return (
     <header className="flex h-11 items-center justify-between border-b bg-background px-3 [-webkit-app-region:drag]">
       <div className="flex items-center gap-2">
@@ -22,16 +28,21 @@ export function Titlebar({ serviceOnline }: { serviceOnline: boolean }) {
       </div>
 
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
+        <button
+          type="button"
+          onClick={onOpenKernels}
+          className="flex items-center gap-2 rounded-full border bg-muted/40 px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring [-webkit-app-region:no-drag]"
+          title="前往内核下载"
+        >
           <span
             className={
-              serviceOnline
+              kernelInstalled
                 ? 'size-2 rounded-full bg-[#17b26a]'
                 : 'size-2 rounded-full bg-[#98a2b3]'
             }
           />
-          {serviceOnline ? '本地服务运行中' : '预览模式'}
-        </div>
+          {kernelInstalled ? '内核准备就绪' : '内核未安装'}
+        </button>
         <div className="flex items-center [-webkit-app-region:no-drag]">
           <Button
             variant="ghost"

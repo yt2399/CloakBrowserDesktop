@@ -1,11 +1,13 @@
 import cors from 'cors'
 import express from 'express'
 import type { Server } from 'node:http'
+import { getInstalledKernelVersions } from '../kernel-releases'
 import { closeDatabase, getDatabase } from './db/database'
 import { ProfileStore } from './profile/profileStore'
 import { SessionManager } from './session/sessionManager'
 import { createHealthRouter } from './routes/healthRoutes'
 import { createProfileRouter } from './routes/profileRoutes'
+import { getWorkspacePaths } from '../workspace-paths'
 
 const PORT = Number(process.env.CLOAK_APP_API_PORT || 6788)
 let server: Server | null = null
@@ -15,8 +17,11 @@ export async function startLocalServer(userDataPath: string): Promise<void> {
   if (server) return
 
   const db = getDatabase(userDataPath)
-  const store = new ProfileStore(db, userDataPath)
-  store.ensureSeedData()
+  const paths = getWorkspacePaths()
+  const store = new ProfileStore(db, paths.profilesDirectory)
+  const [defaultBrowserVersion = ''] = await getInstalledKernelVersions()
+  store.assignDefaultBrowserVersion(defaultBrowserVersion)
+  store.ensureSeedData(defaultBrowserVersion)
   sessions = new SessionManager()
 
   const app = express()

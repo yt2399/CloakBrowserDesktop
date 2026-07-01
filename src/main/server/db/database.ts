@@ -21,6 +21,7 @@ export function getDatabase(userDataPath: string): Database.Database {
       timezone TEXT NOT NULL,
       locale TEXT NOT NULL,
       platform TEXT NOT NULL,
+      browserVersion TEXT NOT NULL DEFAULT '',
       screenWidth INTEGER NOT NULL,
       screenHeight INTEGER NOT NULL,
       hardwareConcurrency INTEGER NOT NULL,
@@ -32,6 +33,14 @@ export function getDatabase(userDataPath: string): Database.Database {
       lastOpenedAt INTEGER
     );
   `)
+
+  const profileColumns = db.prepare('PRAGMA table_info(profiles)').all() as Array<{
+    name: string
+  }>
+  if (!profileColumns.some((column) => column.name === 'browserVersion')) {
+    db.exec("ALTER TABLE profiles ADD COLUMN browserVersion TEXT NOT NULL DEFAULT ''")
+  }
+
   return db
 }
 

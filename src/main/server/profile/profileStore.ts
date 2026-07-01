@@ -1,6 +1,6 @@
 import type Database from 'better-sqlite3'
-import { mkdirSync } from 'node:fs'
-import { join } from 'node:path'
+import { existsSync, mkdirSync, rmSync } from 'node:fs'
+import { basename, join, resolve } from 'node:path'
 import { createProfileId, createProfileSeed } from './seed'
 import type { BrowserProfile, ProfileInput } from './types'
 
@@ -28,11 +28,11 @@ function mapProfile(row: ProfileRow): BrowserProfile {
 
 export class ProfileStore {
   private db: Database.Database
-  private userDataPath: string
+  private profilesRoot: string
 
-  constructor(db: Database.Database, userDataPath: string) {
+  constructor(db: Database.Database, profilesRoot: string) {
     this.db = db
-    this.userDataPath = userDataPath
+    this.profilesRoot = profilesRoot
   }
 
   list(): BrowserProfile[] {
@@ -52,7 +52,7 @@ export class ProfileStore {
   create(input: ProfileInput): BrowserProfile {
     const id = createProfileId()
     const now = Date.now()
-    const userDataDir = join(this.userDataPath, 'profiles', id)
+    const userDataDir = join(this.profilesRoot, id)
     mkdirSync(userDataDir, { recursive: true })
 
     const profile: BrowserProfile = {
@@ -65,6 +65,7 @@ export class ProfileStore {
       timezone: input.timezone?.trim() || DEFAULTS.timezone,
       locale: input.locale?.trim() || DEFAULTS.locale,
       platform: input.platform || DEFAULTS.platform,
+      browserVersion: input.browserVersion?.trim() || '',
       screenWidth: input.screenWidth || DEFAULTS.screenWidth,
       screenHeight: input.screenHeight || DEFAULTS.screenHeight,
       hardwareConcurrency: input.hardwareConcurrency || DEFAULTS.hardwareConcurrency,
@@ -80,11 +81,11 @@ export class ProfileStore {
       .prepare(
         `INSERT INTO profiles (
           id, name, seed, userDataDir, proxy, geoip, timezone, locale, platform,
-          screenWidth, screenHeight, hardwareConcurrency, deviceMemory,
+          browserVersion, screenWidth, screenHeight, hardwareConcurrency, deviceMemory,
           storageQuotaMb, startUrl, createdAt, updatedAt, lastOpenedAt
         ) VALUES (
           @id, @name, @seed, @userDataDir, @proxy, @geoip, @timezone, @locale, @platform,
-          @screenWidth, @screenHeight, @hardwareConcurrency, @deviceMemory,
+          @browserVersion, @screenWidth, @screenHeight, @hardwareConcurrency, @deviceMemory,
           @storageQuotaMb, @startUrl, @createdAt, @updatedAt, @lastOpenedAt
         )`
       )
@@ -104,6 +105,7 @@ export class ProfileStore {
       proxy: input.proxy?.trim() ?? current.proxy,
       timezone: input.timezone?.trim() || current.timezone,
       locale: input.locale?.trim() || current.locale,
+      browserVersion: input.browserVersion?.trim() || current.browserVersion,
       startUrl: input.startUrl?.trim() || current.startUrl,
       updatedAt: Date.now()
     }
@@ -117,6 +119,7 @@ export class ProfileStore {
           timezone = @timezone,
           locale = @locale,
           platform = @platform,
+          browserVersion = @browserVersion,
           screenWidth = @screenWidth,
           screenHeight = @screenHeight,
           hardwareConcurrency = @hardwareConcurrency,
@@ -138,10 +141,33 @@ export class ProfileStore {
   }
 
   delete(id: string): void {
+    const profile = this.get(id)
+    if (!profile) return
+
+    const targetPath = resolve(profile.userDataDir)
+    if (basename(targetPath) !== id) {
+      throw new Error('环境数据目录不安全，已拒绝删除')
+    }
+
+    if (existsSync(targetPath)) {
+      rmSync(targetPath, {
+        recursive: true,
+        force: true,
+        maxRetries: 3,
+        retryDelay: 100
+      })
+    }
     this.db.prepare('DELETE FROM profiles WHERE id = ?').run(id)
   }
 
-  ensureSeedData(): void {
+  assignDefaultBrowserVersion(version: string): void {
+    if (!version) return
+    this.db
+      .prepare("UPDATE profiles SET browserVersion = ? WHERE browserVersion = ''")
+      .run(version)
+  }
+
+  ensureSeedData(browserVersion = ''): void {
     if (this.list().length > 0) return
 
     const samples: ProfileInput[] = [
@@ -150,6 +176,7 @@ export class ProfileStore {
         proxy: 'socks5://45.77.12.34:10001',
         timezone: 'Asia/Tokyo',
         locale: 'ja-JP',
+        browserVersion,
         startUrl: 'https://example.com'
       },
       {
@@ -157,6 +184,7 @@ export class ProfileStore {
         proxy: 'socks5://104.21.68.17:20002',
         timezone: 'America/New_York',
         locale: 'en-US',
+        browserVersion,
         startUrl: 'https://example.com'
       },
       {
@@ -164,6 +192,7 @@ export class ProfileStore {
         proxy: 'socks5://185.233.101.55:30003',
         timezone: 'Europe/Berlin',
         locale: 'de-DE',
+        browserVersion,
         startUrl: 'https://example.com'
       },
       {
@@ -172,6 +201,7 @@ export class ProfileStore {
         geoip: false,
         timezone: 'Asia/Shanghai',
         locale: 'zh-CN',
+        browserVersion,
         startUrl: 'https://example.com'
       }
     ]

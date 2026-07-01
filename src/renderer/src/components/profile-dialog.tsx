@@ -10,6 +10,13 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import type { BrowserProfile, ProfileInput } from '@/types'
 
 interface ProfileDialogProps {
@@ -20,6 +27,7 @@ interface ProfileDialogProps {
   onFormChange: (values: ProfileInput) => void
   saving: boolean
   nameError: string | null
+  installedBrowserVersions: string[]
   onSave: () => void
 }
 
@@ -48,6 +56,7 @@ export function ProfileDialog({
   onFormChange,
   saving,
   nameError,
+  installedBrowserVersions,
   onSave
 }: ProfileDialogProps) {
   const update = (patch: Partial<ProfileInput>) =>
@@ -57,27 +66,58 @@ export function ProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[720px]">
+      <DialogContent className="grid max-h-[calc(100vh-2rem)] max-w-[720px] grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden">
         <DialogHeader>
           <DialogTitle>{editing ? '编辑环境' : '创建环境'}</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-2 gap-4 pt-2">
-          <Field label="环境名称" className="col-span-1">
-            <Input
-              placeholder="例如：日本调研环境"
-              value={formValues.name ?? ''}
-              onChange={(e) => update({ name: e.target.value })}
-            />
-            {nameError && <p className="text-sm text-destructive">{nameError}</p>}
-          </Field>
-          <Field label="启动网址" className="col-span-1">
-            <Input
-              placeholder="https://example.com"
-              value={formValues.startUrl ?? ''}
-              onChange={(e) => update({ startUrl: e.target.value })}
-            />
-          </Field>
+        <div className="-mr-2 min-h-0 overflow-y-auto pr-2">
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <Field label="环境名称" className="col-span-1">
+              <Input
+                placeholder="例如：日本调研环境"
+                value={formValues.name ?? ''}
+                onChange={(e) => update({ name: e.target.value })}
+              />
+              {nameError && <p className="text-sm text-destructive">{nameError}</p>}
+            </Field>
+            <Field label="启动网址" className="col-span-1">
+              <Input
+                placeholder="https://example.com"
+                value={formValues.startUrl ?? ''}
+                onChange={(e) => update({ startUrl: e.target.value })}
+              />
+            </Field>
+
+            <Field label="浏览器版本" className="col-span-2">
+              <Select
+                value={formValues.browserVersion || undefined}
+                onValueChange={(value) => update({ browserVersion: value })}
+                disabled={installedBrowserVersions.length === 0}
+              >
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue
+                    placeholder={
+                      installedBrowserVersions.length
+                        ? '请选择浏览器版本'
+                        : '未下载任何浏览器内核'
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {installedBrowserVersions.map((version) => (
+                    <SelectItem key={version} value={version}>
+                      Chromium {version}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {installedBrowserVersions.length
+                  ? '仅显示已下载到本机的浏览器内核版本'
+                  : '请先前往内核下载页面下载当前系统可用版本'}
+              </p>
+            </Field>
 
           <Field label="代理" className="col-span-2">
             <Input
@@ -154,25 +194,29 @@ export function ProfileDialog({
             />
           </Field>
 
-          <div className="col-span-2 flex items-center gap-2.5 rounded-xl border bg-muted/40 p-3.5">
-            <Checkbox
-              id="geoip"
-              checked={!!formValues.geoip}
-              onCheckedChange={(v) => update({ geoip: !!v })}
-            />
-            <Label htmlFor="geoip" className="cursor-pointer text-sm">
-              根据代理自动匹配时区和语言
-            </Label>
-            <ShieldCheck className="size-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">同时减少 WebRTC IP 泄露风险</span>
+            <div className="col-span-2 flex items-center gap-2.5 rounded-xl border bg-muted/40 p-3.5">
+              <Checkbox
+                id="geoip"
+                checked={!!formValues.geoip}
+                onCheckedChange={(v) => update({ geoip: !!v })}
+              />
+              <Label htmlFor="geoip" className="cursor-pointer text-sm">
+                根据代理自动匹配时区和语言
+              </Label>
+              <ShieldCheck className="size-4 text-muted-foreground" />
+              <span className="text-sm text-muted-foreground">同时减少 WebRTC IP 泄露风险</span>
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t bg-background pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
             取消
           </Button>
-          <Button onClick={onSave} disabled={saving}>
+          <Button
+            onClick={onSave}
+            disabled={saving || installedBrowserVersions.length === 0}
+          >
             {saving ? '保存中...' : editing ? '保存' : '创建'}
           </Button>
         </DialogFooter>

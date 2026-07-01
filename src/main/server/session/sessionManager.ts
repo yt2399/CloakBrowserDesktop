@@ -1,4 +1,5 @@
 import type { BrowserContext } from 'playwright-core'
+import { getInstalledKernelVersions } from '../../kernel-releases'
 import type { BrowserProfile, ProfileStatus } from '../profile/types'
 
 type CloakBrowserModule = {
@@ -9,6 +10,7 @@ type CloakBrowserModule = {
     geoip?: boolean
     timezone?: string
     locale?: string
+    browserVersion?: string
     args?: string[]
   }): Promise<BrowserContext>
 }
@@ -29,6 +31,14 @@ export class SessionManager {
 
   async open(profile: BrowserProfile): Promise<void> {
     if (this.contexts.has(profile.id)) return
+    if (!profile.browserVersion) {
+      throw new Error('请先编辑环境并选择浏览器版本')
+    }
+
+    const installedVersions = await getInstalledKernelVersions()
+    if (!installedVersions.includes(profile.browserVersion)) {
+      throw new Error(`浏览器版本 ${profile.browserVersion} 未安装，请重新选择`)
+    }
 
     const args = [
       `--fingerprint=${profile.seed}`,
@@ -48,6 +58,7 @@ export class SessionManager {
       geoip: Boolean(profile.proxy && profile.geoip),
       timezone: profile.timezone,
       locale: profile.locale,
+      browserVersion: profile.browserVersion,
       args
     })
 

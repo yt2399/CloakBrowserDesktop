@@ -1,115 +1,167 @@
-import { Apple, Chrome, Copy, Download, Github, Monitor, Terminal } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  Apple,
+  Chrome,
+  Copy,
+  Download,
+  ExternalLink,
+  FolderOpen,
+  Github,
+  LoaderCircle,
+  Monitor,
+  RefreshCw,
+  Terminal
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
-type PlatformIconName = 'windows' | 'linux' | 'mac'
+type KernelPlatform = 'windows' | 'linux' | 'mac'
 
 interface PlatformDownload {
   name: string
+  platform: KernelPlatform
+  architecture: 'x64' | 'arm64'
   platformTag: string
   archive: string
-  primaryUrl: string
-  githubUrl: string
-  icon: PlatformIconName
+  downloadUrl: string
+  size: number
 }
 
 interface KernelRelease {
+  tag: string
   version: string
   chromiumVersion: string
-  patchLabel: string
+  releaseName: string
+  patchLabel: string | null
   description: string
+  publishedAt: string | null
+  releaseUrl: string
+  prerelease: boolean
+  edition: 'free' | 'pro'
   platforms: PlatformDownload[]
 }
 
-const kernelReleases: KernelRelease[] = [
-  {
-    version: '146.0.7680.177.5',
-    chromiumVersion: 'Chromium 146',
-    patchLabel: '58 个指纹补丁',
-    description: '当前免费版推荐内核，适合 Windows 桌面以及 Linux 桌面和服务器环境。',
-    platforms: [
-      {
-        name: 'Windows x64',
-        platformTag: 'windows-x64',
-        archive: 'cloakbrowser-windows-x64.zip',
-        primaryUrl:
-          'https://cloakbrowser.dev/chromium-v146.0.7680.177.5/cloakbrowser-windows-x64.zip',
-        githubUrl:
-          'https://github.com/CloakHQ/cloakbrowser/releases/download/chromium-v146.0.7680.177.5/cloakbrowser-windows-x64.zip',
-        icon: 'windows'
-      },
-      {
-        name: 'Linux x86_64',
-        platformTag: 'linux-x64',
-        archive: 'cloakbrowser-linux-x64.tar.gz',
-        primaryUrl:
-          'https://cloakbrowser.dev/chromium-v146.0.7680.177.5/cloakbrowser-linux-x64.tar.gz',
-        githubUrl:
-          'https://github.com/CloakHQ/cloakbrowser/releases/download/chromium-v146.0.7680.177.5/cloakbrowser-linux-x64.tar.gz',
-        icon: 'linux'
-      }
-    ]
-  },
-  {
-    version: '146.0.7680.177.3',
-    chromiumVersion: 'Chromium 146',
-    patchLabel: '58 个指纹补丁',
-    description: 'ARM64 平台预编译版本，适合 ARM 服务器、树莓派和 Graviton 实例。',
-    platforms: [
-      {
-        name: 'Linux arm64',
-        platformTag: 'linux-arm64',
-        archive: 'cloakbrowser-linux-arm64.tar.gz',
-        primaryUrl:
-          'https://cloakbrowser.dev/chromium-v146.0.7680.177.3/cloakbrowser-linux-arm64.tar.gz',
-        githubUrl:
-          'https://github.com/CloakHQ/cloakbrowser/releases/download/chromium-v146.0.7680.177.3/cloakbrowser-linux-arm64.tar.gz',
-        icon: 'linux'
-      }
-    ]
-  },
-  {
-    version: '145.0.7632.109.2',
-    chromiumVersion: 'Chromium 145',
-    patchLabel: '26 个指纹补丁',
-    description: '适用于 Apple Silicon 与 Intel 芯片的 macOS 免费版内核。',
-    platforms: [
-      {
-        name: 'macOS Apple Silicon',
-        platformTag: 'darwin-arm64',
-        archive: 'cloakbrowser-darwin-arm64.tar.gz',
-        primaryUrl:
-          'https://cloakbrowser.dev/chromium-v145.0.7632.109.2/cloakbrowser-darwin-arm64.tar.gz',
-        githubUrl:
-          'https://github.com/CloakHQ/cloakbrowser/releases/download/chromium-v145.0.7632.109.2/cloakbrowser-darwin-arm64.tar.gz',
-        icon: 'mac'
-      },
-      {
-        name: 'macOS Intel',
-        platformTag: 'darwin-x64',
-        archive: 'cloakbrowser-darwin-x64.tar.gz',
-        primaryUrl:
-          'https://cloakbrowser.dev/chromium-v145.0.7632.109.2/cloakbrowser-darwin-x64.tar.gz',
-        githubUrl:
-          'https://github.com/CloakHQ/cloakbrowser/releases/download/chromium-v145.0.7632.109.2/cloakbrowser-darwin-x64.tar.gz',
-        icon: 'mac'
-      }
-    ]
-  }
-]
+interface KernelReleaseResult {
+  currentPlatform: KernelPlatform
+  releases: KernelRelease[]
+  fetchedAt: string
+}
+
+const platformLabels: Record<KernelPlatform, string> = {
+  windows: 'Windows',
+  linux: 'Linux',
+  mac: 'macOS'
+}
 
 function openExternalUrl(url: string) {
   window.open(url, '_blank', 'noopener,noreferrer')
 }
 
-function PlatformIcon({ icon }: { icon: PlatformIconName }) {
-  if (icon === 'mac') return <Apple className="size-[18px]" />
-  if (icon === 'linux') return <Terminal className="size-[18px]" />
+function PlatformIcon({ platform }: { platform: KernelPlatform }) {
+  if (platform === 'mac') return <Apple className="size-[18px]" />
+  if (platform === 'linux') return <Terminal className="size-[18px]" />
   return <Monitor className="size-[18px]" />
 }
 
+function formatFileSize(size: number): string {
+  if (!size) return ''
+  const megabytes = size / 1024 / 1024
+  return `${megabytes >= 100 ? megabytes.toFixed(0) : megabytes.toFixed(1)} MB`
+}
+
+function formatPublishedDate(value: string | null): string {
+  if (!value) return ''
+  return new Intl.DateTimeFormat('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
+  }).format(new Date(value))
+}
+
+function LoadingCards() {
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {[0, 1, 2, 3].map((item) => (
+        <div key={item} className="rounded-xl border bg-card p-5">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-10 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-40" />
+            </div>
+          </div>
+          <Skeleton className="mt-5 h-4 w-full" />
+          <Skeleton className="mt-2 h-4 w-3/4" />
+          <Skeleton className="mt-6 h-20 w-full" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function KernelsPage() {
+  const [releaseData, setReleaseData] = useState<KernelReleaseResult | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [installedVersions, setInstalledVersions] = useState<string[]>([])
+  const installedSet = useMemo(() => new Set(installedVersions), [installedVersions])
+
+  const loadReleases = useCallback(async (force = false) => {
+    if (force) setRefreshing(true)
+    else setLoading(true)
+    setError(null)
+
+    try {
+      const result = await window.kernelReleases.list(force)
+      setReleaseData(result)
+    } catch (requestError) {
+      const message =
+        requestError instanceof Error ? requestError.message : '暂时无法获取 GitHub Releases'
+      setError(message)
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }, [])
+
+  const refreshInstalledVersions = useCallback(async () => {
+    try {
+      const versions = await window.kernelReleases.installedVersions()
+      setInstalledVersions(versions)
+    } catch {
+      setInstalledVersions([])
+    }
+  }, [])
+
+  useEffect(() => {
+    loadReleases()
+    refreshInstalledVersions()
+  }, [loadReleases, refreshInstalledVersions])
+
+  useEffect(() => {
+    const onFocus = () => {
+      refreshInstalledVersions()
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [refreshInstalledVersions])
+
+  const visibleReleases = useMemo(() => {
+    if (!releaseData) return []
+
+    return releaseData.releases
+      .map((release) => ({
+        ...release,
+        platforms: release.platforms.filter(
+          (platform) => platform.platform === releaseData.currentPlatform
+        )
+      }))
+      .filter((release) => release.platforms.length > 0)
+  }, [releaseData])
+
   const copyUrl = async (url: string) => {
     try {
       await navigator.clipboard.writeText(url)
@@ -119,122 +171,228 @@ export function KernelsPage() {
     }
   }
 
-  const buildCount = kernelReleases.reduce(
-    (total, release) => total + release.platforms.length,
-    0
-  )
+  const openInstalledDirectory = async (version: string, edition: 'free' | 'pro') => {
+    try {
+      await window.kernelReleases.revealVersion({ version, edition })
+    } catch (openError) {
+      toast.error(openError instanceof Error ? openError.message : '打开内核目录失败')
+    }
+  }
+
+  if (loading) return <LoadingCards />
+
+  if (error && !releaseData) {
+    return (
+      <div className="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 px-6 text-center">
+        <Github className="size-10 text-muted-foreground" />
+        <h2 className="mt-4 text-base font-semibold">Release 列表加载失败</h2>
+        <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
+          {error}。请检查网络连接后重试，或前往 GitHub Releases 直接下载。
+        </p>
+        <div className="mt-5 flex gap-2">
+          <Button onClick={() => loadReleases(true)}>
+            <RefreshCw className="size-4" />
+            重新加载
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() =>
+              openExternalUrl('https://github.com/CloakHQ/CloakBrowser/releases')
+            }
+          >
+            <ExternalLink className="size-4" />
+            打开 GitHub
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!releaseData || visibleReleases.length === 0) {
+    const systemName = releaseData
+      ? platformLabels[releaseData.currentPlatform]
+      : '当前系统'
+
+    return (
+      <div className="flex min-h-[360px] flex-col items-center justify-center rounded-xl border border-dashed bg-muted/20 px-6 text-center">
+        <Chrome className="size-10 text-muted-foreground" />
+        <h2 className="mt-4 text-base font-semibold">暂无 {systemName} 可用内核</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          GitHub Releases 中暂时没有匹配当前系统的预编译资源。
+        </p>
+        <Button className="mt-5" variant="outline" onClick={() => loadReleases(true)}>
+          <RefreshCw className="size-4" />
+          刷新列表
+        </Button>
+      </div>
+    )
+  }
 
   return (
-    <div className="max-w-[1220px] space-y-5">
-      <div className="grid grid-cols-4 gap-3">
-        <div className="space-y-1 rounded-lg border bg-card p-3.5">
-          <span className="text-xs text-muted-foreground">内核版本</span>
-          <p className="text-base font-semibold">{kernelReleases.length}</p>
-        </div>
-        <div className="space-y-1 rounded-lg border bg-card p-3.5">
-          <span className="text-xs text-muted-foreground">可用系统构建</span>
-          <p className="text-base font-semibold">{buildCount}</p>
-        </div>
-        <div className="space-y-1 rounded-lg border bg-card p-3.5">
-          <span className="text-xs text-muted-foreground">最新版本</span>
-          <p className="text-base font-semibold">Chromium 146</p>
-        </div>
-        <div className="space-y-1 rounded-lg border bg-card p-3.5">
-          <span className="text-xs text-muted-foreground">下载源</span>
-          <p className="text-base font-semibold">官方源 + GitHub</p>
-        </div>
+    <div className="max-w-[1220px]">
+      <div className="mb-4 flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          仅显示可在当前 {platformLabels[releaseData.currentPlatform]} 系统下载的版本
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={refreshing}
+          onClick={() => {
+            loadReleases(true)
+            refreshInstalledVersions()
+          }}
+        >
+          {refreshing ? (
+            <LoaderCircle className="size-4 animate-spin" />
+          ) : (
+            <RefreshCw className="size-4" />
+          )}
+          刷新
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 items-stretch gap-4">
-        {kernelReleases.map((release) => (
+        {visibleReleases.map((release) => (
           <article
-            key={release.version}
-            className="flex min-h-[300px] flex-col overflow-hidden rounded-lg border bg-card"
+            key={release.tag}
+            className="flex min-h-[310px] flex-col overflow-hidden rounded-xl border bg-card transition-shadow hover:shadow-sm"
           >
             <div className="flex flex-1 flex-col p-5">
               <div className="flex items-start justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex size-10 items-center justify-center rounded-lg bg-accent text-primary">
+                <div className="flex min-w-0 items-center gap-3">
+                  <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg bg-accent text-primary">
                     <Chrome className="size-5" />
                   </span>
-                  <div>
-                    <h2 className="text-base font-semibold">{release.chromiumVersion}</h2>
-                    <p className="font-mono text-xs text-muted-foreground">{release.version}</p>
+                  <div className="min-w-0">
+                    <button
+                      type="button"
+                      className="group flex max-w-full items-center gap-1.5 text-left"
+                      onClick={() => openExternalUrl(release.releaseUrl)}
+                      title={release.releaseName}
+                    >
+                      <h2 className="truncate text-base font-semibold">
+                        {release.chromiumVersion}
+                      </h2>
+                      <ExternalLink className="size-3.5 shrink-0 text-muted-foreground transition-colors group-hover:text-foreground" />
+                    </button>
+                    <p className="truncate font-mono text-xs text-muted-foreground">
+                      {release.version}
+                    </p>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-[#e9f8ef] text-[#079455]">
-                  免费版
-                </Badge>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {release.prerelease && <Badge variant="outline">预发布</Badge>}
+                  <Badge
+                    variant="secondary"
+                    className={
+                      release.edition === 'pro'
+                        ? 'bg-[#fff4e5] text-[#b54708]'
+                        : 'bg-[#e9f8ef] text-[#079455]'
+                    }
+                  >
+                    {release.edition === 'pro' ? '专业版' : '免费版'}
+                  </Badge>
+                </div>
               </div>
 
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                {release.description}
-              </p>
+              <div className="mt-4">
+                <p className="text-xs font-medium text-muted-foreground">版本说明</p>
+                <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
+                  {release.description}
+                </p>
+              </div>
 
-              <div className="mt-5 flex items-center gap-8 border-y py-3">
+              <div className="mt-5 flex items-start gap-8 border-y py-3">
+                {release.patchLabel && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">指纹补丁</p>
+                    <p className="mt-1 text-sm font-semibold">{release.patchLabel}</p>
+                  </div>
+                )}
                 <div>
-                  <p className="text-xs text-muted-foreground">指纹补丁</p>
-                  <p className="mt-1 text-sm font-semibold">{release.patchLabel}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">支持系统</p>
+                  <p className="text-xs text-muted-foreground">当前系统构建</p>
                   <p className="mt-1 text-sm font-semibold">
                     {release.platforms.map((platform) => platform.name).join(' / ')}
                   </p>
                 </div>
+                {release.publishedAt && (
+                  <div className="ml-auto text-right">
+                    <p className="text-xs text-muted-foreground">发布时间</p>
+                    <p className="mt-1 text-sm font-medium">
+                      {formatPublishedDate(release.publishedAt)}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="border-t bg-muted/20 px-5 py-3.5">
               <p className="mb-1 text-xs font-medium text-muted-foreground">系统下载</p>
               <div className="divide-y">
-                {release.platforms.map((platform) => (
-                  <div
-                    key={platform.platformTag}
-                    className="flex min-h-14 items-center justify-between gap-3 py-2"
-                  >
-                    <div className="flex min-w-0 items-center gap-2.5">
-                      <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-white">
-                        <PlatformIcon icon={platform.icon} />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium">{platform.name}</p>
-                        <p
-                          className="truncate font-mono text-[11px] text-muted-foreground"
-                          title={platform.archive}
+                {release.platforms.map((platform) => {
+                  const isInstalled = installedSet.has(release.version)
+                  return (
+                    <div
+                      key={platform.platformTag}
+                      className="flex min-h-14 items-center justify-between gap-3 py-2"
+                    >
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-md bg-white">
+                          <PlatformIcon platform={platform.platform} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">{platform.name}</p>
+                          <p
+                            className="truncate font-mono text-[11px] text-muted-foreground"
+                            title={platform.archive}
+                          >
+                            {platform.archive}
+                            {platform.size > 0 && ` · ${formatFileSize(platform.size)}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        {isInstalled ? (
+                          <Button
+                            size="sm"
+                            className="h-8"
+                            onClick={() => openInstalledDirectory(release.version, release.edition)}
+                            title={`已下载到 ${release.version} 内核目录`}
+                          >
+                            <FolderOpen className="size-3.5" />
+                            打开目录
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            className="h-8"
+                            onClick={() => openExternalUrl(platform.downloadUrl)}
+                          >
+                            <Download className="size-3.5" />
+                            下载
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title="复制下载地址"
+                          onClick={() => copyUrl(platform.downloadUrl)}
                         >
-                          {platform.archive}
-                        </p>
+                          <Copy className="size-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          title="查看 GitHub Release"
+                          onClick={() => openExternalUrl(release.releaseUrl)}
+                        >
+                          <Github className="size-3.5" />
+                        </Button>
                       </div>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        size="sm"
-                        className="h-8"
-                        onClick={() => openExternalUrl(platform.primaryUrl)}
-                      >
-                        <Download className="size-3.5" />
-                        下载
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        title="复制下载地址"
-                        onClick={() => copyUrl(platform.primaryUrl)}
-                      >
-                        <Copy className="size-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        title="GitHub 备用下载"
-                        onClick={() => openExternalUrl(platform.githubUrl)}
-                      >
-                        <Github className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </article>

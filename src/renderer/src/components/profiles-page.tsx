@@ -1,4 +1,4 @@
-import { Filter, Play, Plus, Search, StopCircle } from 'lucide-react'
+import { Filter, Play, Plus, Search, StopCircle, Trash2 } from 'lucide-react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -49,14 +49,19 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
     setFormValues,
     saving,
     nameError,
+    installedBrowserVersions,
     openCreate,
     openEdit,
     save,
     gotoPage,
     deleteTarget,
+    batchDeleteOpen,
     requestDelete,
     confirmDelete,
     cancelDelete,
+    requestBatchDelete,
+    confirmBatchDelete,
+    cancelBatchDelete,
     openProfile,
     closeProfile,
     batchSetStatus
@@ -132,6 +137,15 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
                 <StopCircle className="size-4" />
                 批量停止
               </Button>
+              <Button
+                variant="outline"
+                className="h-[42px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+                disabled={selectedKeys.length === 0}
+                onClick={requestBatchDelete}
+              >
+                <Trash2 className="size-4" />
+                批量删除
+              </Button>
             </div>
           </div>
         </div>
@@ -161,6 +175,7 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
         onFormChange={setFormValues}
         saving={saving}
         nameError={nameError}
+        installedBrowserVersions={installedBrowserVersions}
         onSave={save}
       />
 
@@ -174,7 +189,7 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
           <AlertDialogHeader>
             <AlertDialogTitle>删除环境</AlertDialogTitle>
             <AlertDialogDescription>
-              确定删除「{deleteTarget?.name}」吗？
+              确定删除「{deleteTarget?.name}」吗？该环境的 Cookie、缓存和本地会话数据也会永久删除。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -187,6 +202,34 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
               }}
             >
               删除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={batchDeleteOpen}
+        onOpenChange={(open) => {
+          if (!open) cancelBatchDelete()
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>批量删除环境</AlertDialogTitle>
+            <AlertDialogDescription>
+              确定删除选中的 {selectedKeys.length} 个环境吗？对应的 Cookie、缓存和本地会话数据也会永久删除。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-white hover:bg-destructive/90"
+              onClick={(event) => {
+                event.preventDefault()
+                confirmBatchDelete()
+              }}
+            >
+              删除 {selectedKeys.length} 个环境
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

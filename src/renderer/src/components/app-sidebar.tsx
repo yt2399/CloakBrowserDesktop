@@ -1,12 +1,12 @@
 import {
   AppWindow,
-  ChevronDown,
+  ArrowUpRight,
   Chrome,
-  ExternalLink,
+  FolderOpen,
   Globe2,
+  HardDrive,
   Settings
 } from 'lucide-react'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   Sidebar,
   SidebarContent,
@@ -38,11 +38,13 @@ function openExternalUrl(url: string) {
 export function AppSidebar({
   activePage,
   onNavigate,
-  collapsed
+  collapsed,
+  profilesDirectory
 }: {
   activePage: PageKey
   onNavigate: (page: PageKey) => void
   collapsed: boolean
+  profilesDirectory: string
 }) {
   return (
     <Sidebar
@@ -74,32 +76,56 @@ export function AppSidebar({
       {!collapsed && (
         <SidebarFooter>
           <div className="flex flex-col gap-2.5">
-            <div className="relative rounded-xl border p-3.5">
-              <div className="flex items-center gap-2">
-                <span className="size-2 rounded-full bg-[#17b26a]" />
-                <span className="text-sm font-semibold">本地工作空间</span>
+            <div className="rounded-xl border bg-white p-3 shadow-sm">
+              <div className="flex items-center gap-2.5">
+                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent">
+                  <HardDrive className="size-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold">本地工作空间</p>
+                  <p className="text-[11px] text-muted-foreground">环境数据目录</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onNavigate('settings')}
+                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  title="工作空间设置"
+                  aria-label="打开工作空间设置"
+                >
+                  <Settings className="size-4" />
+                </button>
               </div>
-              <p className="mt-1 max-w-[150px] truncate font-mono text-xs text-muted-foreground">
-                C:\CloakBrowserApp
-              </p>
-              <ChevronDown className="absolute right-3.5 top-4 size-4 text-muted-foreground" />
+              <div
+                className="mt-2.5 flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-2"
+                title={profilesDirectory}
+              >
+                <FolderOpen className="size-3.5 shrink-0 text-muted-foreground" />
+                <p className="min-w-0 truncate font-mono text-[11px] text-muted-foreground">
+                  {profilesDirectory || '正在读取目录...'}
+                </p>
+              </div>
             </div>
 
             <button
               type="button"
               onClick={() => openExternalUrl('https://fluxbrowser.cn/')}
-              className="group relative flex w-full items-center gap-2.5 rounded-xl border p-3.5 text-left transition hover:bg-white"
+              className="group relative w-full overflow-hidden rounded-xl border border-[#202124] bg-[#101114] p-4 text-left text-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <Avatar className="size-[34px] rounded-lg bg-primary text-primary-foreground">
-                <AvatarFallback className="rounded-lg bg-transparent text-sm font-semibold text-white">
-                  F
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex min-w-0 flex-col">
-                <span className="truncate text-[13px] font-semibold">使用 FluxBrowser 正式版</span>
-                <span className="text-xs text-muted-foreground">访问 fluxbrowser.cn</span>
+              <div>
+                <span className="text-[11px] font-semibold tracking-[0.12em] text-white/70">
+                  FLUXBROWSER
+                </span>
               </div>
-              <ExternalLink className="ml-auto size-4 text-muted-foreground" />
+              <p className="mt-3 text-sm font-semibold leading-5">体验功能更完整的正式版</p>
+              <p className="mt-1 text-xs leading-5 text-white/60">
+                探索专业的浏览器环境管理与服务
+              </p>
+              <div className="mt-3 flex items-center justify-between border-t border-white/10 pt-3 text-xs font-medium">
+                <span>访问 fluxbrowser.cn</span>
+                <span className="inline-flex size-6 items-center justify-center rounded-full bg-white text-[#101114] transition-transform group-hover:translate-x-0.5">
+                  <ArrowUpRight className="size-3.5" />
+                </span>
+              </div>
             </button>
           </div>
         </SidebarFooter>

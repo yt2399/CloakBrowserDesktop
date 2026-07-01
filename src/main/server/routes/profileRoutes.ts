@@ -8,6 +8,11 @@ function getProfileId(value: string | string[] | undefined): string {
   return value || ''
 }
 
+function getProfileIds(value: unknown): string[] {
+  if (!Array.isArray(value)) return []
+  return [...new Set(value.filter((id): id is string => typeof id === 'string' && id.length > 0))]
+}
+
 export function createProfileRouter(store: ProfileStore, sessions: SessionManager) {
   const router = Router()
 
@@ -29,6 +34,21 @@ export function createProfileRouter(store: ProfileStore, sessions: SessionManage
   router.put(
     '/profiles/:id',
     apiHandler((req) => store.update(getProfileId(req.params.id), req.body ?? {}))
+  )
+
+  router.post(
+    '/profiles/batch-delete',
+    apiHandler(async (req) => {
+      const ids = getProfileIds(req.body?.ids)
+      if (ids.length === 0) throw new Error('请选择要删除的环境')
+
+      for (const id of ids) {
+        await sessions.close(id)
+        store.delete(id)
+      }
+
+      return { ids }
+    })
   )
 
   router.delete(

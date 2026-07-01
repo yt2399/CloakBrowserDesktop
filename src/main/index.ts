@@ -2,7 +2,18 @@ import { app, BrowserWindow, ipcMain, shell } from 'electron'
 import type { IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import {
+  getInstalledKernelVersions,
+  getKernelInstallationStatus,
+  getKernelReleases,
+  revealKernelDirectory
+} from './kernel-releases'
 import { startLocalServer, stopLocalServer } from './server/app'
+import {
+  chooseWorkspaceDirectory,
+  getWorkspacePaths,
+  revealWorkspaceDirectory
+} from './workspace-paths'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -13,6 +24,9 @@ function getAppIconPath(): string {
 }
 
 async function createWindow(): Promise<void> {
+  // Initialize workspace (load settings + apply CLOAKBROWSER_CACHE_DIR)
+  // BEFORE startLocalServer, so the dynamic cloakbrowser import sees the env var.
+  getWorkspacePaths()
   await startLocalServer(app.getPath('userData'))
 
   mainWindow = new BrowserWindow({
@@ -74,6 +88,40 @@ ipcMain.handle('window:close', (event) => {
 
 ipcMain.handle('window:is-maximized', (event) => {
   return Boolean(getWindowFromEvent(event)?.isMaximized())
+})
+
+ipcMain.handle('kernels:list-releases', (_event, force?: boolean) => {
+  return getKernelReleases(Boolean(force))
+})
+
+ipcMain.handle('kernels:installation-status', () => {
+  return getKernelInstallationStatus()
+})
+
+ipcMain.handle('kernels:installed-versions', () => {
+  return getInstalledKernelVersions()
+})
+
+ipcMain.handle(
+  'kernels:reveal-version',
+  (_event, payload: { version: string; edition: 'free' | 'pro' }) => {
+    if (!payload || typeof payload.version !== 'string') {
+      throw new Error('缺少内核版本号')
+    }
+    return revealKernelDirectory(payload.version, payload.edition)
+  }
+)
+
+ipcMain.handle('workspace:get-paths', () => {
+  return getWorkspacePaths()
+})
+
+ipcMain.handle('workspace:choose-directory', () => {
+  return chooseWorkspaceDirectory()
+})
+
+ipcMain.handle('workspace:reveal-workspace', () => {
+  return revealWorkspaceDirectory()
 })
 
 app.whenReady().then(() => {

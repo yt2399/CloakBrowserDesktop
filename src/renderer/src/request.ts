@@ -40,6 +40,12 @@ export const profileApi = {
   remove(id: string) {
     return request<{ id: string }>(`/profiles/${id}`, { method: 'DELETE' })
   },
+  batchDelete(ids: string[]) {
+    return request<{ ids: string[] }>('/profiles/batch-delete', {
+      method: 'POST',
+      body: JSON.stringify({ ids })
+    })
+  },
   open(id: string) {
     return request<{ id: string; status: string }>(`/profiles/${id}/open`, { method: 'POST' })
   },

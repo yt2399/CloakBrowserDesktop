@@ -63,6 +63,11 @@ function StatusBadge({ status }: { status: ProfileStatus }) {
   )
 }
 
+function platformLabel(platform: BrowserProfile['platform']): string {
+  if (platform === 'macos') return 'macOS'
+  return platform[0].toUpperCase() + platform.slice(1)
+}
+
 export function ProfilesTable({
   loading,
   pagedProfiles,
@@ -96,7 +101,7 @@ export function ProfilesTable({
   }
 
   return (
-    <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card">
+    <div className="flex min-w-0 flex-col overflow-x-auto rounded-xl border bg-card">
       <Table>
         <TableHeader>
           <TableRow className="border-b">
@@ -110,6 +115,7 @@ export function ProfilesTable({
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">名称</TableHead>
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">状态</TableHead>
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">代理</TableHead>
+            <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">时区·语言</TableHead>
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">最近打开</TableHead>
             <TableHead className="h-[50px] px-4 text-right text-[13px] font-semibold text-[#344054]">操作</TableHead>
           </TableRow>
@@ -122,13 +128,14 @@ export function ProfilesTable({
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-44" /></TableCell>
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-16" /></TableCell>
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-32" /></TableCell>
+                <TableCell className="px-4 py-3"><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-20" /></TableCell>
                 <TableCell className="px-4 py-3"><Skeleton className="ml-auto h-5 w-24" /></TableCell>
               </TableRow>
             ))
           ) : pagedProfiles.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="h-32 text-center text-sm text-muted-foreground">
+              <TableCell colSpan={7} className="h-32 text-center text-sm text-muted-foreground">
                 暂无环境数据
               </TableCell>
             </TableRow>
@@ -151,8 +158,17 @@ export function ProfilesTable({
                     </Avatar>
                     <div className="flex min-w-0 flex-col gap-0.5">
                       <span className="truncate font-medium text-[#344054]">{record.name}</span>
-                      <span className="truncate text-xs text-muted-foreground">
-                        {record.platform} · {record.screenWidth}x{record.screenHeight}
+                      <span
+                        className="truncate font-mono text-[11px] text-muted-foreground"
+                        title={
+                          record.browserVersion
+                            ? `Chromium ${record.browserVersion} · ${platformLabel(record.platform)}`
+                            : platformLabel(record.platform)
+                        }
+                      >
+                        {record.browserVersion
+                          ? `Chromium ${record.browserVersion} · ${platformLabel(record.platform)}`
+                          : `未选择版本 · ${platformLabel(record.platform)}`}
                       </span>
                     </div>
                   </div>
@@ -169,6 +185,16 @@ export function ProfilesTable({
                   ) : (
                     <Badge variant="secondary" className="bg-[#f2f4f7] text-[#667085]">无代理</Badge>
                   )}
+                </TableCell>
+                <TableCell className="px-4 py-3">
+                  <div className="flex min-w-0 flex-col gap-0.5">
+                    <span className="truncate font-mono text-xs text-[#475467]" title={record.timezone}>
+                      {record.timezone}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground" title={record.locale}>
+                      {record.locale}
+                    </span>
+                  </div>
                 </TableCell>
                 <TableCell className="px-4 py-3 text-xs text-muted-foreground">
                   {formatTime(record.lastOpenedAt)}

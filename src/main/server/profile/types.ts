@@ -10,6 +10,7 @@ export interface BrowserProfile {
   timezone: string
   locale: string
   platform: 'windows' | 'macos' | 'linux'
+  browserVersion: string
   screenWidth: number
   screenHeight: number
   hardwareConcurrency: number
@@ -28,6 +29,7 @@ export interface ProfileInput {
   timezone?: string
   locale?: string
   platform?: 'windows' | 'macos' | 'linux'
+  browserVersion?: string
   screenWidth?: number
   screenHeight?: number
   hardwareConcurrency?: number

@@ -12,6 +12,7 @@ const defaultForm: ProfileInput = {
   timezone: 'Asia/Shanghai',
   locale: 'zh-CN',
   platform: 'windows',
+  browserVersion: '',
   screenWidth: 1920,
   screenHeight: 1080,
   hardwareConcurrency: 8,
@@ -31,6 +32,7 @@ const mockProfiles: BrowserProfile[] = [
     timezone: 'Asia/Tokyo',
     locale: 'ja-JP',
     platform: 'windows',
+    browserVersion: '',
     screenWidth: 1920,
     screenHeight: 1080,
     hardwareConcurrency: 8,
@@ -52,6 +54,7 @@ const mockProfiles: BrowserProfile[] = [
     timezone: 'America/New_York',
     locale: 'en-US',
     platform: 'windows',
+    browserVersion: '',
     screenWidth: 1920,
     screenHeight: 1080,
     hardwareConcurrency: 8,
@@ -73,6 +76,7 @@ const mockProfiles: BrowserProfile[] = [
     timezone: 'Europe/Berlin',
     locale: 'de-DE',
     platform: 'windows',
+    browserVersion: '',
     screenWidth: 1920,
     screenHeight: 1080,
     hardwareConcurrency: 8,
@@ -94,6 +98,7 @@ const mockProfiles: BrowserProfile[] = [
     timezone: 'Asia/Shanghai',
     locale: 'zh-CN',
     platform: 'windows',
+    browserVersion: '',
     screenWidth: 1920,
     screenHeight: 1080,
     hardwareConcurrency: 8,
@@ -126,6 +131,7 @@ export function useProfiles() {
   const [selectedKeys, setSelectedKeys] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
   const [serviceOnline, setServiceOnline] = useState(false)
+  const [installedBrowserVersions, setInstalledBrowserVersions] = useState<string[]>([])
   const [page, setPage] = useState(1)
 
   const [modalOpen, setModalOpen] = useState(false)
@@ -135,6 +141,7 @@ export function useProfiles() {
   const [nameError, setNameError] = useState<string | null>(null)
 
   const [deleteTarget, setDeleteTarget] = useState<BrowserProfile | null>(null)
+  const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
 
   const refreshProfiles = async () => {
     setLoading(true)
@@ -154,10 +161,25 @@ export function useProfiles() {
     refreshProfiles()
   }, [])
 
+  useEffect(() => {
+    const refreshInstalledBrowserVersions = async () => {
+      try {
+        setInstalledBrowserVersions(await window.kernelReleases.installedVersions())
+      } catch {
+        setInstalledBrowserVersions([])
+      }
+    }
+
+    refreshInstalledBrowserVersions()
+    window.addEventListener('focus', refreshInstalledBrowserVersions)
+    return () => window.removeEventListener('focus', refreshInstalledBrowserVersions)
+  }, [])
+
   const filteredProfiles = useMemo(() => {
     return profiles.filter((item) => {
       const matchesTab = tab === 'all' || item.status === tab
-      const text = `${item.name} ${item.proxy} ${item.timezone} ${item.locale}`.toLowerCase()
+      const text =
+        `${item.name} ${item.proxy} ${item.timezone} ${item.locale} ${item.browserVersion}`.toLowerCase()
       return matchesTab && text.includes(query.toLowerCase())
     })
   }, [profiles, query, tab])
@@ -184,14 +206,22 @@ export function useProfiles() {
 
   const openCreate = () => {
     setEditing(null)
-    setFormValues(defaultForm)
+    setFormValues({
+      ...defaultForm,
+      browserVersion: installedBrowserVersions[0] ?? ''
+    })
     setNameError(null)
     setModalOpen(true)
   }
 
   const openEdit = (profile: BrowserProfile) => {
     setEditing(profile)
-    setFormValues({ ...profile })
+    setFormValues({
+      ...profile,
+      browserVersion: installedBrowserVersions.includes(profile.browserVersion)
+        ? profile.browserVersion
+        : installedBrowserVersions[0] ?? ''
+    })
     setNameError(null)
     setModalOpen(true)
   }
@@ -201,6 +231,14 @@ export function useProfiles() {
   const save = async () => {
     if (!formValues.name?.trim()) {
       setNameError('请输入环境名称')
+      return
+    }
+    if (!formValues.browserVersion) {
+      toast.warning(
+        installedBrowserVersions.length
+          ? '请选择浏览器版本'
+          : '未下载任何浏览器内核，请先前往内核下载页面'
+      )
       return
     }
     setNameError(null)
@@ -272,8 +310,38 @@ export function useProfiles() {
       await profileApi.remove(target.id)
       setSelectedKeys((keys) => keys.filter((id) => id !== target.id))
       await refreshProfiles()
+      toast.success('环境及本地数据已删除')
     } catch (error) {
       toast.error(error instanceof Error ? error.message : '删除失败')
+    }
+  }
+
+  const requestBatchDelete = () => {
+    if (selectedKeys.length > 0) setBatchDeleteOpen(true)
+  }
+
+  const cancelBatchDelete = () => setBatchDeleteOpen(false)
+
+  const confirmBatchDelete = async () => {
+    if (selectedKeys.length === 0) return
+    const ids = [...selectedKeys]
+    setBatchDeleteOpen(false)
+
+    if (!serviceOnline) {
+      setProfiles((items) => items.filter((item) => !ids.includes(item.id)))
+      setSelectedKeys([])
+      toast.success(`已删除 ${ids.length} 个环境`)
+      return
+    }
+
+    try {
+      await profileApi.batchDelete(ids)
+      setSelectedKeys([])
+      await refreshProfiles()
+      toast.success(`已删除 ${ids.length} 个环境及其本地数据`)
+    } catch (error) {
+      await refreshProfiles()
+      toast.error(error instanceof Error ? error.message : '批量删除失败')
     }
   }
 
@@ -300,6 +368,7 @@ export function useProfiles() {
     profiles,
     loading,
     serviceOnline,
+    installedBrowserVersions,
     query,
     setQuery,
     tab,
@@ -324,9 +393,13 @@ export function useProfiles() {
     save,
     gotoPage,
     deleteTarget,
+    batchDeleteOpen,
     requestDelete,
     confirmDelete,
     cancelDelete,
+    requestBatchDelete,
+    confirmBatchDelete,
+    cancelBatchDelete,
     openProfile,
     closeProfile,
     batchSetStatus
