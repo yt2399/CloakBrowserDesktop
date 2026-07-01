@@ -16,6 +16,36 @@ contextBridge.exposeInMainWorld('kernelReleases', {
   list: (force = false) => ipcRenderer.invoke('kernels:list-releases', force),
   installationStatus: () => ipcRenderer.invoke('kernels:installation-status'),
   installedVersions: () => ipcRenderer.invoke('kernels:installed-versions') as Promise<string[]>,
+  download: (payload: { version: string; edition: 'free' | 'pro' }) =>
+    ipcRenderer.invoke('kernels:download', payload) as Promise<{
+      version: string
+      edition: 'free' | 'pro'
+      binaryPath: string
+    }>,
+  onDownloadProgress: (
+    callback: (progress: {
+      version: string
+      phase: 'downloading' | 'verifying' | 'extracting' | 'completed' | 'failed'
+      percent: number | null
+      downloadedMegabytes?: number
+      totalMegabytes?: number
+      message?: string
+    }) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      progress: {
+        version: string
+        phase: 'downloading' | 'verifying' | 'extracting' | 'completed' | 'failed'
+        percent: number | null
+        downloadedMegabytes?: number
+        totalMegabytes?: number
+        message?: string
+      }
+    ) => callback(progress)
+    ipcRenderer.on('kernels:download-progress', listener)
+    return () => ipcRenderer.removeListener('kernels:download-progress', listener)
+  },
   revealVersion: (payload: { version: string; edition: 'free' | 'pro' }) =>
     ipcRenderer.invoke('kernels:reveal-version', payload) as Promise<void>
 })

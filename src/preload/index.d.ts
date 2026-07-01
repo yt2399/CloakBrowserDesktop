@@ -28,6 +28,7 @@ interface KernelRelease {
 
 interface KernelReleaseResult {
   currentPlatform: KernelPlatform
+  currentArchitecture: 'x64' | 'arm64'
   releases: KernelRelease[]
   fetchedAt: string
 }
@@ -36,6 +37,15 @@ interface KernelInstallationStatus {
   installed: boolean
   version: string
   binaryPath: string
+}
+
+interface KernelDownloadProgress {
+  version: string
+  phase: 'downloading' | 'verifying' | 'extracting' | 'completed' | 'failed'
+  percent: number | null
+  downloadedMegabytes?: number
+  totalMegabytes?: number
+  message?: string
 }
 
 interface WorkspacePaths {
@@ -60,6 +70,15 @@ declare global {
       list: (force?: boolean) => Promise<KernelReleaseResult>
       installationStatus: () => Promise<KernelInstallationStatus>
       installedVersions: () => Promise<string[]>
+      download: (payload: {
+        version: string
+        edition: 'free' | 'pro'
+      }) => Promise<{
+        version: string
+        edition: 'free' | 'pro'
+        binaryPath: string
+      }>
+      onDownloadProgress: (callback: (progress: KernelDownloadProgress) => void) => () => void
       revealVersion: (payload: { version: string; edition: 'free' | 'pro' }) => Promise<void>
     }
     workspace: {

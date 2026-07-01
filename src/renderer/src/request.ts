@@ -1,4 +1,10 @@
-import type { ApiResponse, BrowserProfile, ProfileInput } from './types'
+import type {
+  ApiResponse,
+  BrowserProfile,
+  ProfileInput,
+  ProxyInput,
+  SavedProxy
+} from './types'
 
 const fallbackBaseUrl = 'http://127.0.0.1:6788/api'
 
@@ -54,5 +60,26 @@ export const profileApi = {
   },
   health() {
     return request<{ service: string; kernel: string }>('/health')
+  }
+}
+
+export const proxyApi = {
+  list() {
+    return request<SavedProxy[]>('/proxies')
+  },
+  create(input: ProxyInput) {
+    return request<SavedProxy>('/proxies', {
+      method: 'POST',
+      body: JSON.stringify(input)
+    })
+  },
+  update(id: string, input: ProxyInput) {
+    return request<SavedProxy>(`/proxies/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(input)
+    })
+  },
+  remove(id: string) {
+    return request<{ id: string }>(`/proxies/${id}`, { method: 'DELETE' })
   }
 }

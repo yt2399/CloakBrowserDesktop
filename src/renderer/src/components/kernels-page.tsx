@@ -45,8 +45,18 @@ interface KernelRelease {
 
 interface KernelReleaseResult {
   currentPlatform: KernelPlatform
+  currentArchitecture: 'x64' | 'arm64'
   releases: KernelRelease[]
   fetchedAt: string
+}
+
+interface KernelDownloadProgress {
+  version: string
+  phase: 'downloading' | 'verifying' | 'extracting' | 'completed' | 'failed'
+  percent: number | null
+  downloadedMegabytes?: number
+  totalMegabytes?: number
+  message?: string
 }
 
 const platformLabels: Record<KernelPlatform, string> = {
@@ -107,6 +117,9 @@ export function KernelsPage() {
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [installedVersions, setInstalledVersions] = useState<string[]>([])
+  const [downloadProgress, setDownloadProgress] = useState<
+    Map<string, KernelDownloadProgress>
+  >(new Map())
   const installedSet = useMemo(() => new Set(installedVersions), [installedVersions])
 
   const loadReleases = useCallback(async (force = false) => {
@@ -142,6 +155,16 @@ export function KernelsPage() {
   }, [loadReleases, refreshInstalledVersions])
 
   useEffect(() => {
+    return window.kernelReleases.onDownloadProgress((progress) => {
+      setDownloadProgress((current) => {
+        const next = new Map(current)
+        next.set(progress.version, progress)
+        return next
+      })
+    })
+  }, [])
+
+  useEffect(() => {
     const onFocus = () => {
       refreshInstalledVersions()
     }
@@ -156,7 +179,9 @@ export function KernelsPage() {
       .map((release) => ({
         ...release,
         platforms: release.platforms.filter(
-          (platform) => platform.platform === releaseData.currentPlatform
+          (platform) =>
+            platform.platform === releaseData.currentPlatform &&
+            platform.architecture === releaseData.currentArchitecture
         )
       }))
       .filter((release) => release.platforms.length > 0)
@@ -177,6 +202,38 @@ export function KernelsPage() {
     } catch (openError) {
       toast.error(openError instanceof Error ? openError.message : '打开内核目录失败')
     }
+  }
+
+  const downloadVersion = async (version: string, edition: 'free' | 'pro') => {
+    setDownloadProgress((current) => {
+      const next = new Map(current)
+      next.set(version, { version, phase: 'downloading', percent: 0 })
+      return next
+    })
+    try {
+      await window.kernelReleases.download({ version, edition })
+      await refreshInstalledVersions()
+      window.dispatchEvent(new Event('kernel-installation-changed'))
+      toast.success(`内核 ${version} 已下载并解压到工作目录`)
+    } catch (downloadError) {
+      toast.error(
+        downloadError instanceof Error ? downloadError.message : `内核 ${version} 下载失败`
+      )
+    } finally {
+      setDownloadProgress((current) => {
+        const next = new Map(current)
+        next.delete(version)
+        return next
+      })
+    }
+  }
+
+  const progressLabel = (progress: KernelDownloadProgress): string => {
+    if (progress.phase === 'verifying') return '正在校验'
+    if (progress.phase === 'extracting') return '正在解压'
+    if (progress.phase === 'completed') return '处理完成'
+    if (progress.phase === 'failed') return '下载失败'
+    return progress.percent === null ? '正在下载' : `正在下载 ${progress.percent}%`
   }
 
   if (loading) return <LoadingCards />
@@ -332,6 +389,10 @@ export function KernelsPage() {
               <div className="divide-y">
                 {release.platforms.map((platform) => {
                   const isInstalled = installedSet.has(release.version)
+                  const currentProgress = downloadProgress.get(release.version)
+                  const isDownloading = Boolean(
+                    currentProgress && currentProgress.phase !== 'failed'
+                  )
                   return (
                     <div
                       key={platform.platformTag}
@@ -347,9 +408,35 @@ export function KernelsPage() {
                             className="truncate font-mono text-[11px] text-muted-foreground"
                             title={platform.archive}
                           >
-                            {platform.archive}
-                            {platform.size > 0 && ` · ${formatFileSize(platform.size)}`}
+                           {platform.archive}
+                           {platform.size > 0 && ` · ${formatFileSize(platform.size)}`}
                           </p>
+                          {currentProgress && (
+                            <div className="mt-1.5 w-48">
+                              <div className="mb-1 flex items-center justify-between text-[10px] text-muted-foreground">
+                                <span>{progressLabel(currentProgress)}</span>
+                                {currentProgress.downloadedMegabytes !== undefined &&
+                                  currentProgress.totalMegabytes !== undefined && (
+                                    <span>
+                                      {currentProgress.downloadedMegabytes}/
+                                      {currentProgress.totalMegabytes} MB
+                                    </span>
+                                  )}
+                              </div>
+                              <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className={`h-full rounded-full bg-primary transition-[width] duration-300 ${
+                                    currentProgress.percent === null ? 'w-1/3 animate-pulse' : ''
+                                  }`}
+                                  style={
+                                    currentProgress.percent === null
+                                      ? undefined
+                                      : { width: `${currentProgress.percent}%` }
+                                  }
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="flex shrink-0 items-center gap-1">
@@ -367,10 +454,15 @@ export function KernelsPage() {
                           <Button
                             size="sm"
                             className="h-8"
-                            onClick={() => openExternalUrl(platform.downloadUrl)}
+                            disabled={isDownloading}
+                            onClick={() => downloadVersion(release.version, release.edition)}
                           >
-                            <Download className="size-3.5" />
-                            下载
+                            {isDownloading ? (
+                              <LoaderCircle className="size-3.5 animate-spin" />
+                            ) : (
+                              <Download className="size-3.5" />
+                            )}
+                            {currentProgress ? progressLabel(currentProgress) : '下载'}
                           </Button>
                         )}
                         <Button

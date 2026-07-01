@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { profileApi } from '../request'
 import type { BrowserProfile, ProfileInput, ProfileStatus } from '../types'
+import { startProfilePolling } from './profile-polling'
 
 const PAGE_SIZE = 8
+const PROFILE_STATUS_POLL_INTERVAL_MS = 3000
 
 const defaultForm: ProfileInput = {
   name: '',
@@ -143,23 +145,30 @@ export function useProfiles() {
   const [deleteTarget, setDeleteTarget] = useState<BrowserProfile | null>(null)
   const [batchDeleteOpen, setBatchDeleteOpen] = useState(false)
 
-  const refreshProfiles = async () => {
-    setLoading(true)
+  const refreshProfiles = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true)
     try {
-      const [list] = await Promise.all([profileApi.list(), profileApi.health()])
+      const list = silent
+        ? await profileApi.list()
+        : (await Promise.all([profileApi.list(), profileApi.health()]))[0]
       setProfiles(list)
       setServiceOnline(true)
     } catch {
-      setProfiles(mockProfiles)
+      if (!silent) setProfiles(mockProfiles)
       setServiceOnline(false)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
-    refreshProfiles()
-  }, [])
+    let firstRefresh = true
+    return startProfilePolling(() => {
+      const silent = !firstRefresh
+      firstRefresh = false
+      return refreshProfiles(silent)
+    }, PROFILE_STATUS_POLL_INTERVAL_MS)
+  }, [refreshProfiles])
 
   useEffect(() => {
     const refreshInstalledBrowserVersions = async () => {

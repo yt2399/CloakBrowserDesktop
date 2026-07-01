@@ -1,4 +1,4 @@
-import { Filter, Play, Plus, Search, StopCircle, Trash2 } from 'lucide-react'
+import { Filter, Play, Plus, Search, StopCircle, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -7,28 +7,29 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle
-} from '@/components/ui/alert-dialog'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { ProfileDialog } from '@/components/profile-dialog'
-import { ProfilesTable } from '@/components/profiles-table'
-import type { ProfilesStore } from '@/hooks/use-profiles'
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ProfileDialog } from '@/components/profile-dialog';
+import { ProfilesTable } from '@/components/profiles-table';
+import type { ProfilesStore } from '@/hooks/use-profiles';
+import type { SavedProxy } from '@/types';
 
 const tabs: Array<{ key: 'all' | 'running' | 'stopped'; label: (n: number) => string }> = [
   { key: 'all', label: (n) => `全部（${n}）` },
   { key: 'running', label: (n) => `运行中（${n}）` },
-  { key: 'stopped', label: (n) => `已停止（${n}）` }
-]
+  { key: 'stopped', label: (n) => `已停止（${n}）` },
+];
 
-export function ProfilesPage({ store }: { store: ProfilesStore }) {
+export function ProfilesPage({
+  store,
+  savedProxies,
+}: {
+  store: ProfilesStore;
+  savedProxies: SavedProxy[];
+}) {
   const {
     loading,
     pagedProfiles,
@@ -64,16 +65,16 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
     cancelBatchDelete,
     openProfile,
     closeProfile,
-    batchSetStatus
-  } = store
+    batchSetStatus,
+  } = store;
 
   return (
-    <div className="flex min-w-0 flex-col gap-3">
+    <div className="flex w-full min-w-0 flex-col gap-3">
       <section className="rounded-xl border bg-card p-5">
-        <div className="flex items-start justify-between gap-6">
-          <div className="flex min-w-[430px] flex-col gap-5">
-            <div className="flex items-center gap-3">
-              <div className="relative w-[330px]">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="flex min-w-[360px] flex-1 flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full max-w-[330px]">
                 <Search className="absolute left-3 top-1/2 size-[17px] -translate-y-1/2 text-muted-foreground" />
                 <Input
                   placeholder="搜索环境名称或代理"
@@ -82,7 +83,10 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
                   className="h-[42px] pl-9"
                 />
               </div>
-              <Button variant="outline" className="h-[42px]">
+              <Button
+                variant="outline"
+                className="h-[42px]"
+              >
                 <Filter className="size-4" />
                 筛选
               </Button>
@@ -105,8 +109,8 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-4">
-            <div className="flex items-center gap-3">
+          <div className="flex min-w-[410px] flex-col items-end gap-4">
+            <div className="flex flex-wrap items-center justify-end gap-3">
               <Select defaultValue="all-tz">
                 <SelectTrigger className="h-[42px] w-[136px]">
                   <SelectValue />
@@ -123,17 +127,28 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
                   <SelectItem value="all-status">全部状态</SelectItem>
                 </SelectContent>
               </Select>
-              <Button className="h-[42px]" onClick={openCreate}>
+              <Button
+                className="h-[42px]"
+                onClick={openCreate}
+              >
                 <Plus className="size-[18px]" />
                 创建环境
               </Button>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" className="h-[42px]" onClick={() => batchSetStatus('running')}>
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <Button
+                variant="outline"
+                className="h-[42px]"
+                onClick={() => batchSetStatus('running')}
+              >
                 <Play className="size-4" />
                 批量启动
               </Button>
-              <Button variant="outline" className="h-[42px]" onClick={() => batchSetStatus('stopped')}>
+              <Button
+                variant="outline"
+                className="h-[42px]"
+                onClick={() => batchSetStatus('stopped')}
+              >
                 <StopCircle className="size-4" />
                 批量停止
               </Button>
@@ -176,13 +191,14 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
         saving={saving}
         nameError={nameError}
         installedBrowserVersions={installedBrowserVersions}
+        savedProxies={savedProxies}
         onSave={save}
       />
 
       <AlertDialog
         open={!!deleteTarget}
         onOpenChange={(open) => {
-          if (!open) cancelDelete()
+          if (!open) cancelDelete();
         }}
       >
         <AlertDialogContent>
@@ -197,8 +213,8 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={(e) => {
-                e.preventDefault()
-                confirmDelete()
+                e.preventDefault();
+                confirmDelete();
               }}
             >
               删除
@@ -210,7 +226,7 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
       <AlertDialog
         open={batchDeleteOpen}
         onOpenChange={(open) => {
-          if (!open) cancelBatchDelete()
+          if (!open) cancelBatchDelete();
         }}
       >
         <AlertDialogContent>
@@ -225,8 +241,8 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
             <AlertDialogAction
               className="bg-destructive text-white hover:bg-destructive/90"
               onClick={(event) => {
-                event.preventDefault()
-                confirmBatchDelete()
+                event.preventDefault();
+                confirmBatchDelete();
               }}
             >
               删除 {selectedKeys.length} 个环境
@@ -235,5 +251,5 @@ export function ProfilesPage({ store }: { store: ProfilesStore }) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

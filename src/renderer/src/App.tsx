@@ -2,15 +2,16 @@ import { useCallback, useEffect, useState } from 'react'
 import { ExternalLink } from 'lucide-react'
 import { AppSidebar, type PageKey, pageTitle } from '@/components/app-sidebar'
 import { Button } from '@/components/ui/button'
-import { EmptyPage } from '@/components/empty-page'
 import { KernelsPage } from '@/components/kernels-page'
 import { ProfilesPage } from '@/components/profiles-page'
+import { ProxyPage } from '@/components/proxy-page'
 import { SettingsPage } from '@/components/settings-page'
 import { SiteHeader } from '@/components/site-header'
 import { Titlebar } from '@/components/titlebar'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Toaster } from '@/components/ui/sonner'
 import { useProfiles } from '@/hooks/use-profiles'
+import { useProxies } from '@/hooks/use-proxies'
 
 interface WorkspacePaths {
   workspaceDirectory: string
@@ -24,6 +25,7 @@ export default function App() {
   const [kernelInstalled, setKernelInstalled] = useState(false)
   const [workspacePaths, setWorkspacePaths] = useState<WorkspacePaths | null>(null)
   const store = useProfiles()
+  const proxyStore = useProxies()
   const isKernelsPage = activePage === 'kernels'
 
   const refreshKernelStatus = useCallback(async () => {
@@ -61,11 +63,15 @@ export default function App() {
     }
 
     window.addEventListener('focus', refreshLocalState)
-    return () => window.removeEventListener('focus', refreshLocalState)
+    window.addEventListener('kernel-installation-changed', refreshKernelStatus)
+    return () => {
+      window.removeEventListener('focus', refreshLocalState)
+      window.removeEventListener('kernel-installation-changed', refreshKernelStatus)
+    }
   }, [refreshKernelStatus, refreshWorkspacePaths])
 
   return (
-    <div className="grid h-screen min-w-[1180px] grid-rows-[44px_1fr] bg-background">
+    <div className="grid h-screen grid-rows-[44px_1fr] bg-background">
       <Titlebar
         kernelInstalled={kernelInstalled}
         onOpenKernels={() => setActivePage('kernels')}
@@ -79,14 +85,15 @@ export default function App() {
           activePage={activePage}
           onNavigate={setActivePage}
           collapsed={!sidebarOpen}
-          profilesDirectory={workspacePaths?.profilesDirectory ?? ''}
         />
-        <SidebarInset className="min-w-0 bg-white">
+        <SidebarInset className="w-0 min-w-0 max-w-full bg-white">
           <SiteHeader
             title={pageTitle(activePage)}
             subtitle={
               isKernelsPage
                 ? '按版本查看 CloakBrowser 免费版预编译内核及各系统下载。'
+                : activePage === 'proxy'
+                  ? '集中管理本地代理，并在创建环境时快速复用。'
                 : activePage === 'settings'
                   ? '查看应用实际使用的本地存储目录。'
                 : undefined
@@ -110,13 +117,15 @@ export default function App() {
               ) : undefined
             }
           />
-          <main className="flex-1 min-w-0 overflow-auto p-6">
-            {activePage === 'profiles' && <ProfilesPage store={store} />}
+          <main className="min-h-0 w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-6">
+            {activePage === 'profiles' && (
+              <ProfilesPage store={store} savedProxies={proxyStore.proxies} />
+            )}
             {activePage === 'kernels' && <KernelsPage />}
             {activePage === 'settings' && (
               <SettingsPage paths={workspacePaths} onChange={handleWorkspaceChange} />
             )}
-            {activePage === 'proxy' && <EmptyPage />}
+            {activePage === 'proxy' && <ProxyPage store={proxyStore} />}
           </main>
         </SidebarInset>
       </SidebarProvider>

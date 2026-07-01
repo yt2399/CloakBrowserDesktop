@@ -1,4 +1,5 @@
 import { net, shell } from 'electron'
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { existsSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { getWorkspacePaths } from './workspace-paths'
@@ -51,6 +52,7 @@ export interface KernelRelease {
 
 export interface KernelReleaseResult {
   currentPlatform: SupportedPlatform
+  currentArchitecture: SupportedArchitecture
   releases: KernelRelease[]
   fetchedAt: string
 }
@@ -61,13 +63,96 @@ export interface KernelInstallationStatus {
   binaryPath: string
 }
 
+export interface KernelDownloadResult {
+  version: string
+  edition: 'free' | 'pro'
+  binaryPath: string
+}
+
+export interface KernelDownloadProgress {
+  version: string
+  phase: 'downloading' | 'verifying' | 'extracting' | 'completed' | 'failed'
+  percent: number | null
+  downloadedMegabytes?: number
+  totalMegabytes?: number
+  message?: string
+}
+
+type KernelDownloadProgressListener = (progress: KernelDownloadProgress) => void
+
 let releaseCache: KernelReleaseResult | null = null
 let releaseRequest: Promise<KernelReleaseResult> | null = null
+const kernelDownloadRequests = new Map<string, Promise<KernelDownloadResult>>()
+const downloadLogContext = new AsyncLocalStorage<{
+  version: string
+  onProgress: KernelDownloadProgressListener
+}>()
+let downloadLogObserverInstalled = false
+
+function emitProgressFromDownloadLog(message: string): void {
+  const context = downloadLogContext.getStore()
+  if (!context) return
+
+  const progressMatch = message.match(
+    /\[cloakbrowser\] Download progress: (\d+)% \((\d+)\/(\d+) MB\)/
+  )
+  if (progressMatch) {
+    context.onProgress({
+      version: context.version,
+      phase: 'downloading',
+      percent: Number(progressMatch[1]),
+      downloadedMegabytes: Number(progressMatch[2]),
+      totalMegabytes: Number(progressMatch[3])
+    })
+    return
+  }
+
+  if (message.includes('[cloakbrowser] Downloading from ')) {
+    context.onProgress({
+      version: context.version,
+      phase: 'downloading',
+      percent: 0
+    })
+  } else if (message.includes('[cloakbrowser] Download complete:')) {
+    context.onProgress({
+      version: context.version,
+      phase: 'verifying',
+      percent: 100
+    })
+  } else if (message.includes('[cloakbrowser] Extracting to ')) {
+    context.onProgress({
+      version: context.version,
+      phase: 'extracting',
+      percent: 100
+    })
+  } else if (message.includes('[cloakbrowser] Binary ready:')) {
+    context.onProgress({
+      version: context.version,
+      phase: 'completed',
+      percent: 100
+    })
+  }
+}
+
+function installDownloadLogObserver(): void {
+  if (downloadLogObserverInstalled) return
+  downloadLogObserverInstalled = true
+
+  const originalLog = console.log.bind(console)
+  console.log = (...args: unknown[]) => {
+    originalLog(...args)
+    emitProgressFromDownloadLog(args.map(String).join(' '))
+  }
+}
 
 function currentPlatform(): SupportedPlatform {
   if (process.platform === 'darwin') return 'mac'
   if (process.platform === 'linux') return 'linux'
   return 'windows'
+}
+
+function currentArchitecture(): SupportedArchitecture {
+  return process.arch === 'arm64' ? 'arm64' : 'x64'
 }
 
 function platformName(
@@ -218,6 +303,7 @@ async function requestKernelReleases(): Promise<KernelReleaseResult> {
 
   return {
     currentPlatform: currentPlatform(),
+    currentArchitecture: currentArchitecture(),
     releases,
     fetchedAt: new Date().toISOString()
   }
@@ -284,6 +370,64 @@ export async function getInstalledKernelVersions(): Promise<string[]> {
   )
 }
 
+export function downloadKernel(
+  version: string,
+  edition: 'free' | 'pro',
+  onProgress: KernelDownloadProgressListener = () => {}
+): Promise<KernelDownloadResult> {
+  if (!version || !/^\d+(?:\.\d+)+$/.test(version)) {
+    return Promise.reject(new Error('无效的内核版本号'))
+  }
+  if (edition !== 'free' && edition !== 'pro') {
+    return Promise.reject(new Error('无效的内核版本类型'))
+  }
+
+  const requestKey = `${version}:${edition}`
+  const pendingRequest = kernelDownloadRequests.get(requestKey)
+  if (pendingRequest) return pendingRequest
+
+  // Re-apply the configured workspace before importing cloakbrowser. Its
+  // downloader reads CLOAKBROWSER_CACHE_DIR and handles download verification,
+  // extraction, executable permissions, and cleanup of temporary archives.
+  getWorkspacePaths()
+  installDownloadLogObserver()
+  onProgress({ version, phase: 'downloading', percent: 0 })
+
+  const request = downloadLogContext
+    .run({ version, onProgress }, () =>
+      import('cloakbrowser').then(async ({ ensureBinary, binaryInfo }) => {
+        const binaryPath = await ensureBinary(undefined, version)
+        const installedEdition = binaryInfo(version).tier
+
+        if (edition === 'pro' && installedEdition !== 'pro') {
+          throw new Error('专业版内核需要有效的 CloakBrowser Pro 授权')
+        }
+
+        onProgress({ version, phase: 'completed', percent: 100 })
+        return {
+          version,
+          edition: installedEdition,
+          binaryPath
+        }
+      })
+    )
+    .catch((error) => {
+      onProgress({
+        version,
+        phase: 'failed',
+        percent: null,
+        message: error instanceof Error ? error.message : String(error)
+      })
+      throw error
+    })
+    .finally(() => {
+      kernelDownloadRequests.delete(requestKey)
+    })
+
+  kernelDownloadRequests.set(requestKey, request)
+  return request
+}
+
 export async function revealKernelDirectory(
   version: string,
   edition: 'free' | 'pro'
@@ -294,10 +438,15 @@ export async function revealKernelDirectory(
 
   const { kernelDirectory } = getWorkspacePaths()
   const dirName = `chromium-${version}${edition === 'pro' ? '-pro' : ''}`
-  const dirPath = join(kernelDirectory, dirName)
+  let dirPath = join(kernelDirectory, dirName)
 
   if (!existsSync(dirPath)) {
-    throw new Error(`内核 ${version} 尚未下载到工作目录`)
+    const alternateDirName = `chromium-${version}${edition === 'pro' ? '' : '-pro'}`
+    const alternateDirPath = join(kernelDirectory, alternateDirName)
+    if (!existsSync(alternateDirPath)) {
+      throw new Error(`内核 ${version} 尚未下载到工作目录`)
+    }
+    dirPath = alternateDirPath
   }
 
   const error = await shell.openPath(dirPath)

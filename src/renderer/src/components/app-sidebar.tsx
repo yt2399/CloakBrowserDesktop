@@ -2,9 +2,9 @@ import {
   AppWindow,
   ArrowUpRight,
   Chrome,
-  FolderOpen,
+
   Globe2,
-  HardDrive,
+
   Settings
 } from 'lucide-react'
 import {
@@ -38,13 +38,11 @@ function openExternalUrl(url: string) {
 export function AppSidebar({
   activePage,
   onNavigate,
-  collapsed,
-  profilesDirectory
+  collapsed
 }: {
   activePage: PageKey
   onNavigate: (page: PageKey) => void
   collapsed: boolean
-  profilesDirectory: string
 }) {
   return (
     <Sidebar
@@ -76,36 +74,6 @@ export function AppSidebar({
       {!collapsed && (
         <SidebarFooter>
           <div className="flex flex-col gap-2.5">
-            <div className="rounded-xl border bg-white p-3 shadow-sm">
-              <div className="flex items-center gap-2.5">
-                <span className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent">
-                  <HardDrive className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-semibold">本地工作空间</p>
-                  <p className="text-[11px] text-muted-foreground">环境数据目录</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onNavigate('settings')}
-                  className="inline-flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  title="工作空间设置"
-                  aria-label="打开工作空间设置"
-                >
-                  <Settings className="size-4" />
-                </button>
-              </div>
-              <div
-                className="mt-2.5 flex items-center gap-2 rounded-lg bg-muted/60 px-2.5 py-2"
-                title={profilesDirectory}
-              >
-                <FolderOpen className="size-3.5 shrink-0 text-muted-foreground" />
-                <p className="min-w-0 truncate font-mono text-[11px] text-muted-foreground">
-                  {profilesDirectory || '正在读取目录...'}
-                </p>
-              </div>
-            </div>
-
             <button
               type="button"
               onClick={() => openExternalUrl('https://fluxbrowser.cn/')}

@@ -32,6 +32,19 @@ export function getDatabase(userDataPath: string): Database.Database {
       updatedAt INTEGER NOT NULL,
       lastOpenedAt INTEGER
     );
+
+    CREATE TABLE IF NOT EXISTS proxies (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      protocol TEXT NOT NULL,
+      host TEXT NOT NULL,
+      port INTEGER NOT NULL,
+      username TEXT NOT NULL DEFAULT '',
+      password TEXT NOT NULL DEFAULT '',
+      url TEXT NOT NULL,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
+    );
   `)
 
   const profileColumns = db.prepare('PRAGMA table_info(profiles)').all() as Array<{

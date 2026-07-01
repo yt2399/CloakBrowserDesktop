@@ -101,8 +101,8 @@ export function ProfilesTable({
   }
 
   return (
-    <div className="flex min-w-0 flex-col overflow-x-auto rounded-xl border bg-card">
-      <Table>
+    <div className="flex min-w-0 flex-col overflow-hidden rounded-xl border bg-card">
+      <Table className="min-w-[1080px]">
         <TableHeader>
           <TableRow className="border-b">
             <TableHead className="w-[52px] px-4">
@@ -117,7 +117,9 @@ export function ProfilesTable({
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">代理</TableHead>
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">时区·语言</TableHead>
             <TableHead className="h-[50px] px-4 text-[13px] font-semibold text-[#344054]">最近打开</TableHead>
-            <TableHead className="h-[50px] px-4 text-right text-[13px] font-semibold text-[#344054]">操作</TableHead>
+            <TableHead className="sticky right-0 z-20 h-[50px] w-[132px] min-w-[132px] bg-card px-4 text-right text-[13px] font-semibold text-[#344054] shadow-[-8px_0_12px_-12px_rgba(16,24,40,0.35)]">
+              操作
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -130,7 +132,9 @@ export function ProfilesTable({
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-32" /></TableCell>
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-24" /></TableCell>
                 <TableCell className="px-4 py-3"><Skeleton className="h-5 w-20" /></TableCell>
-                <TableCell className="px-4 py-3"><Skeleton className="ml-auto h-5 w-24" /></TableCell>
+                <TableCell className="sticky right-0 z-10 bg-card px-4 py-3 shadow-[-8px_0_12px_-12px_rgba(16,24,40,0.35)]">
+                  <Skeleton className="ml-auto h-5 w-24" />
+                </TableCell>
               </TableRow>
             ))
           ) : pagedProfiles.length === 0 ? (
@@ -141,7 +145,7 @@ export function ProfilesTable({
             </TableRow>
           ) : (
             pagedProfiles.map((record) => (
-              <TableRow key={record.id} className="border-b last:border-0">
+              <TableRow key={record.id} className="group border-b last:border-0">
                 <TableCell className="px-4 py-3">
                   <Checkbox
                     checked={selectedKeys.includes(record.id)}
@@ -199,7 +203,7 @@ export function ProfilesTable({
                 <TableCell className="px-4 py-3 text-xs text-muted-foreground">
                   {formatTime(record.lastOpenedAt)}
                 </TableCell>
-                <TableCell className="px-4 py-3">
+                <TableCell className="sticky right-0 z-10 bg-card px-4 py-3 shadow-[-8px_0_12px_-12px_rgba(16,24,40,0.35)] transition-colors group-hover:bg-muted/50">
                   <div className="flex items-center justify-end gap-1">
                     {record.status === 'running' ? (
                       <Button

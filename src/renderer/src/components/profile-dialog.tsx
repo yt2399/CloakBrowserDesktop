@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { ShieldCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -17,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select'
-import type { BrowserProfile, ProfileInput } from '@/types'
+import type { BrowserProfile, ProfileInput, SavedProxy } from '@/types'
 
 interface ProfileDialogProps {
   open: boolean
@@ -28,6 +29,7 @@ interface ProfileDialogProps {
   saving: boolean
   nameError: string | null
   installedBrowserVersions: string[]
+  savedProxies: SavedProxy[]
   onSave: () => void
 }
 
@@ -57,12 +59,40 @@ export function ProfileDialog({
   saving,
   nameError,
   installedBrowserVersions,
+  savedProxies,
   onSave
 }: ProfileDialogProps) {
+  const [proxyChoice, setProxyChoice] = useState('none')
   const update = (patch: Partial<ProfileInput>) =>
     onFormChange({ ...formValues, ...patch })
 
   const numValue = (v: number | undefined) => (v === undefined ? '' : v)
+
+  useEffect(() => {
+    if (!open) return
+    if (!formValues.proxy) {
+      setProxyChoice('none')
+      return
+    }
+    const savedProxy = savedProxies.find((proxy) => proxy.url === formValues.proxy)
+    setProxyChoice(savedProxy?.id ?? 'custom')
+  }, [open, editing?.id, savedProxies])
+
+  const changeProxyChoice = (value: string) => {
+    setProxyChoice(value)
+    if (value === 'none') {
+      update({ proxy: '' })
+      return
+    }
+    if (value === 'custom') {
+      if (savedProxies.some((proxy) => proxy.id === proxyChoice)) {
+        update({ proxy: '' })
+      }
+      return
+    }
+    const selected = savedProxies.find((proxy) => proxy.id === value)
+    if (selected) update({ proxy: selected.url })
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -119,13 +149,32 @@ export function ProfileDialog({
               </p>
             </Field>
 
-          <Field label="代理" className="col-span-2">
-            <Input
-              placeholder="socks5://user:pass@host:port，留空则不使用代理"
-              value={formValues.proxy ?? ''}
-              onChange={(e) => update({ proxy: e.target.value })}
-            />
-          </Field>
+            <Field label="代理" className="col-span-2">
+              <Select value={proxyChoice} onValueChange={changeProxyChoice}>
+                <SelectTrigger className="h-10 w-full">
+                  <SelectValue placeholder="请选择代理" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">不使用代理</SelectItem>
+                  {savedProxies.map((proxy) => (
+                    <SelectItem key={proxy.id} value={proxy.id}>
+                      {proxy.name} · {proxy.protocol}://{proxy.host}:{proxy.port}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value="custom">自定义代理 URL</SelectItem>
+                </SelectContent>
+              </Select>
+              {proxyChoice === 'custom' && (
+                <Input
+                  placeholder="socks5://user:pass@host:port"
+                  value={formValues.proxy ?? ''}
+                  onChange={(event) => update({ proxy: event.target.value })}
+                />
+              )}
+              <p className="text-xs text-muted-foreground">
+                可选择代理页中已保存的代理，也可以直接填写完整 URL
+              </p>
+            </Field>
 
           <Field label="时区" className="col-span-1">
             <Input

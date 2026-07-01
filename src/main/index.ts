@@ -3,6 +3,7 @@ import type { IpcMainInvokeEvent } from 'electron'
 import { join } from 'node:path'
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import {
+  downloadKernel,
   getInstalledKernelVersions,
   getKernelInstallationStatus,
   getKernelReleases,
@@ -103,6 +104,20 @@ ipcMain.handle('kernels:installed-versions', () => {
 })
 
 ipcMain.handle(
+  'kernels:download',
+  (event, payload: { version: string; edition: 'free' | 'pro' }) => {
+    if (!payload || typeof payload.version !== 'string') {
+      throw new Error('缺少内核版本号')
+    }
+    return downloadKernel(payload.version, payload.edition, (progress) => {
+      if (!event.sender.isDestroyed()) {
+        event.sender.send('kernels:download-progress', progress)
+      }
+    })
+  }
+)
+
+ipcMain.handle(
   'kernels:reveal-version',
   (_event, payload: { version: string; edition: 'free' | 'pro' }) => {
     if (!payload || typeof payload.version !== 'string') {
@@ -128,7 +143,9 @@ app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.cloakbrowser.app')
 
   app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
+    if (is.dev) {
+      optimizer.watchWindowShortcuts(window)
+    }
   })
 
   createWindow()
