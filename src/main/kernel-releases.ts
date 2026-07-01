@@ -272,7 +272,7 @@ async function fetchGithubReleases(): Promise<GithubRelease[]> {
     const response = await net.fetch(`${RELEASES_API_URL}?per_page=100&page=${page}`, {
       headers: {
         Accept: 'application/vnd.github+json',
-        'User-Agent': 'CloakBrowserApp',
+        'User-Agent': 'CloakBrowserDesktop',
         'X-GitHub-Api-Version': '2022-11-28'
       }
     })

@@ -1,5 +1,5 @@
 appId: com.cloakbrowser.app
-productName: CloakBrowserApp
+productName: CloakBrowserDesktop
 directories:
   buildResources: build
 extraResources:
@@ -13,7 +13,7 @@ asarUnpack:
   - node_modules/cloakbrowser/**
   - node_modules/playwright-core/**
 win:
-  executableName: CloakBrowserApp
+  executableName: CloakBrowserDesktop
   icon: build/icon.ico
 mac:
   icon: build/icon.png

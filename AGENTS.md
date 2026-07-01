@@ -1,4 +1,4 @@
-# CloakBrowserApp
+# CloakBrowserDesktop
 
 ## What this is
 

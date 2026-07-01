@@ -59,6 +59,7 @@ declare global {
     appInfo: {
       name: string
       apiBaseUrl: string
+      version: string
     }
     appWindow: {
       minimize: () => Promise<void>

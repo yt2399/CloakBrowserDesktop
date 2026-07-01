@@ -37,7 +37,7 @@ async function createWindow(): Promise<void> {
     minHeight: 720,
     show: false,
     autoHideMenuBar: true,
-    title: 'CloakBrowserApp',
+    title: 'CloakBrowserDesktop',
     icon: getAppIconPath(),
     frame: false,
     webPreferences: {

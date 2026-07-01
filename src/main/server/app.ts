@@ -37,7 +37,7 @@ export async function startLocalServer(userDataPath: string): Promise<void> {
 
   await new Promise<void>((resolve) => {
     server = app.listen(PORT, '127.0.0.1', () => {
-      console.log(`CloakBrowserApp API started on http://127.0.0.1:${PORT}/api`)
+      console.log(`CloakBrowserDesktop API started on http://127.0.0.1:${PORT}/api`)
       resolve()
     })
   })

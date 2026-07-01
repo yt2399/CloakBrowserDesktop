@@ -1,8 +1,11 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
+declare const __APP_VERSION__: string
+
 contextBridge.exposeInMainWorld('appInfo', {
-  name: 'CloakBrowserApp',
-  apiBaseUrl: 'http://127.0.0.1:6788/api'
+  name: 'CloakBrowserDesktop',
+  apiBaseUrl: 'http://127.0.0.1:6788/api',
+  version: __APP_VERSION__
 })
 
 contextBridge.exposeInMainWorld('appWindow', {

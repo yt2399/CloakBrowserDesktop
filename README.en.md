@@ -1,12 +1,12 @@
-# CloakBrowserApp
+# CloakBrowserDesktop
 
 <p align="center">
-  <img src="./docs/images/logo.png" alt="CloakBrowserApp Logo" width="180" />
+  <img src="./docs/images/logo.png" alt="CloakBrowserDesktop Logo" width="180" />
 </p>
 
 English | [简体中文](./README.md)
 
-CloakBrowserApp is a local browser environment manager and launcher powered by [CloakBrowser](https://github.com/CloakHQ/CloakBrowser).
+CloakBrowserDesktop is a local browser environment manager and launcher powered by [CloakBrowser](https://github.com/CloakHQ/CloakBrowser).
 
 It brings CloakBrowser launches, persistent profiles, fingerprint settings, and proxy capabilities into a desktop management interface. Users can create and maintain multiple isolated browser environments without writing launch scripts.
 
@@ -43,7 +43,7 @@ Environment settings include:
 - Automatic timezone and locale matching through the proxy
 - CloakBrowser fingerprint seed and launch arguments
 
-When an environment is started, CloakBrowserApp creates the configured persistent browser context and launches a real browser window through CloakBrowser.
+When an environment is started, CloakBrowserDesktop creates the configured persistent browser context and launches a real browser window through CloakBrowser.
 
 ## Kernel Management
 
@@ -63,15 +63,15 @@ It provides:
 
 CloakBrowser is a Chromium project with source-level fingerprint modifications and support for persistent profiles, proxies, timezone, locale, and browser fingerprint configuration.
 
-CloakBrowserApp does not modify the CloakBrowser kernel. It provides a visual management and launch layer around those capabilities:
+CloakBrowserDesktop does not modify the CloakBrowser kernel. It provides a visual management and launch layer around those capabilities:
 
 - CloakBrowser supplies the browser kernel, fingerprint capabilities, and browser runtime
-- CloakBrowserApp manages environments, profile settings, status, and launch controls
+- CloakBrowserDesktop manages environments, profile settings, status, and launch controls
 
 See the [official CloakBrowser project](https://github.com/CloakHQ/CloakBrowser) for detailed browser capabilities, supported platforms, and kernel releases.
 
 ## License
 
-CloakBrowserApp is licensed under the [PolyForm Noncommercial License 1.0.0](./LICENSE).
+CloakBrowserDesktop is licensed under the [PolyForm Noncommercial License 1.0.0](./LICENSE).
 
 Personal study, research, testing, and other qualifying noncommercial uses are permitted. Commercial use requires separate authorization. CloakBrowser, Chromium, and other third-party components remain subject to their own licenses.

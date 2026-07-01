@@ -1,12 +1,12 @@
-# CloakBrowserApp
+# CloakBrowserDesktop
 
 <p align="center">
-  <img src="./docs/images/logo.png" alt="CloakBrowserApp Logo" width="180" />
+  <img src="./docs/images/logo.png" alt="CloakBrowserDesktop Logo" width="180" />
 </p>
 
 [English](./README.en.md) | 简体中文
 
-CloakBrowserApp 是一个基于 [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) 的本地浏览器环境管理与启动工具。
+CloakBrowserDesktop 是一个基于 [CloakBrowser](https://github.com/CloakHQ/CloakBrowser) 的本地浏览器环境管理与启动工具。
 
 它将 CloakBrowser 的浏览器启动、持久化 Profile、指纹参数和代理能力整合到桌面管理界面中。用户无需编写启动代码，即可创建多个相互隔离的浏览器环境，并对环境进行统一配置、启动、停止和维护。
 
@@ -43,7 +43,7 @@ CloakBrowserApp 是一个基于 [CloakBrowser](https://github.com/CloakHQ/CloakB
 - 根据代理自动匹配时区和语言
 - CloakBrowser 指纹种子与启动参数
 
-启动环境时，CloakBrowserApp 会根据配置创建对应的持久化浏览器上下文，并使用 CloakBrowser 启动真实浏览器窗口。
+启动环境时，CloakBrowserDesktop 会根据配置创建对应的持久化浏览器上下文，并使用 CloakBrowser 启动真实浏览器窗口。
 
 ## 内核管理
 
@@ -63,10 +63,10 @@ CloakBrowserApp 是一个基于 [CloakBrowser](https://github.com/CloakHQ/CloakB
 
 CloakBrowser 是经过源码级指纹修改的 Chromium 浏览器项目，提供持久化 Profile、代理、时区、语言和浏览器指纹等启动能力。
 
-CloakBrowserApp 不修改 CloakBrowser 内核，而是在其能力之上提供可视化的环境管理和启动入口：
+CloakBrowserDesktop 不修改 CloakBrowser 内核，而是在其能力之上提供可视化的环境管理和启动入口：
 
 - CloakBrowser 负责浏览器内核、指纹能力与浏览器运行
-- CloakBrowserApp 负责环境配置、Profile 管理、状态展示和启动控制
+- CloakBrowserDesktop 负责环境配置、Profile 管理、状态展示和启动控制
 
 有关 CloakBrowser 的详细能力、支持平台和内核版本，请查看 [CloakBrowser 官方项目](https://github.com/CloakHQ/CloakBrowser)。
 

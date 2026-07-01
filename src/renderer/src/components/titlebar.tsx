@@ -20,9 +20,9 @@ export function Titlebar({
           aria-hidden="true"
         />
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">CloakBrowserApp</span>
+          <span className="text-sm font-semibold">CloakBrowserDesktop</span>
           <Badge variant="secondary" className="bg-muted text-foreground">
-            v1.0.0
+            v{window.appInfo?.version ?? '0.0.0'}
           </Badge>
         </div>
       </div>
