@@ -23,97 +23,6 @@ const defaultForm: ProfileInput = {
   startUrl: 'https://example.com'
 }
 
-const mockProfiles: BrowserProfile[] = [
-  {
-    id: 'mock-jp',
-    name: '日本调研环境',
-    seed: 'profile_japan_research',
-    userDataDir: 'C:\\CloakBrowserDesktop\\Profiles\\japan-research',
-    proxy: 'socks5://45.77.12.34:10001',
-    geoip: true,
-    timezone: 'Asia/Tokyo',
-    locale: 'ja-JP',
-    platform: 'windows',
-    browserVersion: '',
-    screenWidth: 1920,
-    screenHeight: 1080,
-    hardwareConcurrency: 8,
-    deviceMemory: 8,
-    storageQuotaMb: 5000,
-    startUrl: 'https://example.com',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    lastOpenedAt: Date.now() - 1000 * 60 * 80,
-    status: 'running'
-  },
-  {
-    id: 'mock-us',
-    name: '美国测试环境',
-    seed: 'profile_us_qa',
-    userDataDir: 'C:\\CloakBrowserDesktop\\Profiles\\us-qa',
-    proxy: 'socks5://104.21.68.17:20002',
-    geoip: true,
-    timezone: 'America/New_York',
-    locale: 'en-US',
-    platform: 'windows',
-    browserVersion: '',
-    screenWidth: 1920,
-    screenHeight: 1080,
-    hardwareConcurrency: 8,
-    deviceMemory: 8,
-    storageQuotaMb: 5000,
-    startUrl: 'https://example.com',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    lastOpenedAt: Date.now() - 1000 * 60 * 150,
-    status: 'running'
-  },
-  {
-    id: 'mock-eu',
-    name: '欧洲店铺环境',
-    seed: 'profile_eu_storefront',
-    userDataDir: 'C:\\CloakBrowserDesktop\\Profiles\\eu-storefront',
-    proxy: 'socks5://185.233.101.55:30003',
-    geoip: true,
-    timezone: 'Europe/Berlin',
-    locale: 'de-DE',
-    platform: 'windows',
-    browserVersion: '',
-    screenWidth: 1920,
-    screenHeight: 1080,
-    hardwareConcurrency: 8,
-    deviceMemory: 8,
-    storageQuotaMb: 5000,
-    startUrl: 'https://example.com',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    lastOpenedAt: Date.now() - 1000 * 60 * 240,
-    status: 'running'
-  },
-  {
-    id: 'mock-local',
-    name: '本地演示环境',
-    seed: 'profile_local_demo',
-    userDataDir: 'C:\\CloakBrowserDesktop\\Profiles\\local-demo',
-    proxy: '',
-    geoip: false,
-    timezone: 'Asia/Shanghai',
-    locale: 'zh-CN',
-    platform: 'windows',
-    browserVersion: '',
-    screenWidth: 1920,
-    screenHeight: 1080,
-    hardwareConcurrency: 8,
-    deviceMemory: 8,
-    storageQuotaMb: 5000,
-    startUrl: 'https://example.com',
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    lastOpenedAt: Date.now() - 1000 * 60 * 880,
-    status: 'stopped'
-  }
-]
-
 function formatTime(value: number | null): string {
   if (!value) return '-'
   return new Intl.DateTimeFormat('zh-CN', {
@@ -154,7 +63,7 @@ export function useProfiles() {
       setProfiles(list)
       setServiceOnline(true)
     } catch {
-      if (!silent) setProfiles(mockProfiles)
+      if (!silent) setProfiles([])
       setServiceOnline(false)
     } finally {
       if (!silent) setLoading(false)

@@ -24,7 +24,6 @@ export async function startLocalServer(userDataPath: string): Promise<void> {
   const proxyStore = new ProxyStore(db)
   const [defaultBrowserVersion = ''] = await getInstalledKernelVersions()
   store.assignDefaultBrowserVersion(defaultBrowserVersion)
-  store.ensureSeedData(defaultBrowserVersion)
   sessions = new SessionManager()
 
   const app = express()

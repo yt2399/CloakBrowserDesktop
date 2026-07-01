@@ -105,7 +105,7 @@ export function ProfileDialog({
           <div className="grid grid-cols-2 gap-4 pt-2">
             <Field label="环境名称" className="col-span-1">
               <Input
-                placeholder="例如：日本调研环境"
+                placeholder="例如：工作环境"
                 value={formValues.name ?? ''}
                 onChange={(e) => update({ name: e.target.value })}
               />

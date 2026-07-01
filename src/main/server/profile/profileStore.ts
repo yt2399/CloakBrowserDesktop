@@ -166,46 +166,4 @@ export class ProfileStore {
       .prepare("UPDATE profiles SET browserVersion = ? WHERE browserVersion = ''")
       .run(version)
   }
-
-  ensureSeedData(browserVersion = ''): void {
-    if (this.list().length > 0) return
-
-    const samples: ProfileInput[] = [
-      {
-        name: '日本调研环境',
-        proxy: 'socks5://45.77.12.34:10001',
-        timezone: 'Asia/Tokyo',
-        locale: 'ja-JP',
-        browserVersion,
-        startUrl: 'https://example.com'
-      },
-      {
-        name: '美国测试环境',
-        proxy: 'socks5://104.21.68.17:20002',
-        timezone: 'America/New_York',
-        locale: 'en-US',
-        browserVersion,
-        startUrl: 'https://example.com'
-      },
-      {
-        name: '欧洲店铺环境',
-        proxy: 'socks5://185.233.101.55:30003',
-        timezone: 'Europe/Berlin',
-        locale: 'de-DE',
-        browserVersion,
-        startUrl: 'https://example.com'
-      },
-      {
-        name: '本地演示环境',
-        proxy: '',
-        geoip: false,
-        timezone: 'Asia/Shanghai',
-        locale: 'zh-CN',
-        browserVersion,
-        startUrl: 'https://example.com'
-      }
-    ]
-
-    samples.forEach((sample) => this.create(sample))
-  }
 }
