@@ -25,6 +25,9 @@ publish:
   repo: CloakBrowserDesktop
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  license: build/installer-license.txt
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   installerIcon: build/icon.ico

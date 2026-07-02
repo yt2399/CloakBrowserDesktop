@@ -22,10 +22,10 @@ jobs:
     timeout-minutes: 5
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
 
@@ -38,6 +38,16 @@ jobs:
           echo "Tag: ${TAG_VERSION} | package.json: ${PACKAGE_VERSION}"
           test "${TAG_VERSION}" = "${PACKAGE_VERSION}"
 
+      - name: Check release notes exist
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          RELEASE_NOTES="release-notes/${TAG_VERSION}.md"
+          echo "Release notes: ${RELEASE_NOTES}"
+          test -s "${RELEASE_NOTES}"
+          grep -q '^## ' "${RELEASE_NOTES}"
+
   package-windows:
     name: Package Windows x64
     needs: validate-version
@@ -45,12 +55,16 @@ jobs:
     timeout-minutes: 45
     env:
       ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+      CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+      CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
+      WIN_CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+      WIN_CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
@@ -64,6 +78,15 @@ jobs:
 
       - name: Typecheck and bundle
         run: npm run build
+
+      - name: Report Windows code signing mode
+        shell: bash
+        run: |
+          if [ -n "${WIN_CSC_LINK:-}" ] || [ -n "${CSC_LINK:-}" ]; then
+            echo "Windows code signing certificate secret is configured."
+          else
+            echo "Windows code signing certificate secret is not configured; installer will be unsigned."
+          fi
 
       - name: Package application
         shell: bash
@@ -86,7 +109,7 @@ jobs:
             dist/latest.yml
 
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cloakbrowser-desktop-windows-x64
           path: |
@@ -105,8 +128,11 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
       - name: Download installer artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: cloakbrowser-desktop-windows-x64
           path: release-assets
@@ -116,8 +142,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
+          RELEASE_NOTES="release-notes/${GITHUB_REF_NAME#v}.md"
           gh release create "$GITHUB_REF_NAME" release-assets/* \
             --repo "$GITHUB_REPOSITORY" \
             --title "CloakBrowser Desktop ${GITHUB_REF_NAME#v}" \
-            --generate-notes
-
+            --notes-file "$RELEASE_NOTES"
