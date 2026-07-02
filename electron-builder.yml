@@ -19,6 +19,10 @@ mac:
   icon: build/icon.png
 linux:
   icon: build/icon.png
+publish:
+  provider: github
+  owner: CloakHQ
+  repo: CloakBrowser
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

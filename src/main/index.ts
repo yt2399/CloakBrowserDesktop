@@ -15,6 +15,7 @@ import {
   getWorkspacePaths,
   revealWorkspaceDirectory
 } from './workspace-paths'
+import { initializeAutoUpdater } from './auto-updater'
 
 let mainWindow: BrowserWindow | null = null
 
@@ -149,6 +150,7 @@ app.whenReady().then(() => {
   })
 
   createWindow()
+  initializeAutoUpdater()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
