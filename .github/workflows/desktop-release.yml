@@ -103,7 +103,7 @@ jobs:
               dist/*.zip.blockmap
               dist/latest-mac-x64.yml
           - label: macOS arm64
-            os: macos-latest
+            os: macos-15
             platform: macos
             arch: arm64
             builder_args: --mac dmg zip --arm64
