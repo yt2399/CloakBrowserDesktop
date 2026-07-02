@@ -16,7 +16,7 @@ win:
   executableName: CloakBrowserDesktop
   icon: build/icon.ico
 mac:
-  icon: build/icon.png
+  icon: build/icon.icns
   artifactName: ${name}-${version}-mac-${arch}.${ext}
 linux:
   icon: build/icon.png
