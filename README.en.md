@@ -12,6 +12,14 @@ It brings CloakBrowser launches, persistent profiles, fingerprint settings, and 
 
 > The project is designed for individuals and research scenarios that need long-lived, isolated browser environments backed by CloakBrowser.
 
+## Open Source Community
+
+Scan the QR code to join the open source community group, share usage experience, report issues, and discuss contributions.
+
+<p align="center">
+  <img src="./docs/images/qrcode_1783233323516.jpg" alt="CloakBrowserDesktop open source community QR code" width="260" />
+</p>
+
 ## Overview
 
 | Feature | Description |

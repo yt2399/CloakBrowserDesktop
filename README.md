@@ -12,6 +12,14 @@ CloakBrowserDesktop 是一个基于 [CloakBrowser](https://github.com/CloakHQ/Cl
 
 > 本项目适合需要长期维护多个独立浏览器环境，同时希望直接使用 CloakBrowser 能力的个人用户和研究场景。
 
+## 开源交流群
+
+如果你在使用或研究过程中遇到问题，欢迎扫码加入开源交流群，交流使用经验、反馈问题和参与共建。
+
+<p align="center">
+  <img src="./docs/images/qrcode_1783233323516.jpg" alt="CloakBrowserDesktop 开源交流群二维码" width="260" />
+</p>
+
 ## 功能概览
 
 | 功能 | 说明 |
