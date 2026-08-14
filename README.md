@@ -1,3 +1,5 @@
+
+
 # CloakBrowserDesktop
 
 <p align="center">
@@ -61,7 +63,7 @@ CloakBrowserDesktop 是一个基于 [CloakBrowser](https://github.com/CloakHQ/Cl
 
 ### API 接口
 
-内置本地 HTTP API (`http://127.0.0.1:6788`)，支持通过脚本或第三方工具控制环境的创建、启动、停止和管理。详见应用内「API 接口」页面。
+内置本地 HTTP API (`http://127.0.0.1:6788/api`)，支持通过脚本或第三方工具控制环境的创建、启动、停止和管理。详见应用内「API 接口」页面。
 
 ## 与 CloakBrowser 的关系
 
